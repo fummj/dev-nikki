@@ -1,0 +1,10 @@
+main
+private_jwt.pem
+public_jwt.pem
+.env
+dist/
+
+.DS_Store
+.log
+tmp/
+*.tmp

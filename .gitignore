@@ -1,0 +1,17 @@
+# backend
+front_rebuild.sh
+main
+private_jwt.pem
+public_jwt.pem
+
+# general
+.idea
+.DS_Store
+.log
+.env
+tmp/
+*.tmp
+
+# frontend
+node_modules/
+dist/

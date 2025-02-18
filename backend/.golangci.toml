@@ -1,0 +1,3 @@
+[linters]
+disable-all = true
+enable = ["unparam", "govet", "gci", "gosimple", "staticcheck"]

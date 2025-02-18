@@ -1,0 +1,45 @@
+volumes:
+  dev-nikki-data:
+
+networks:
+  dev_nikki_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.23.0.0/24
+
+services:
+  web:
+    build: ./../backend/
+    ports:
+      - "8080:8080"
+    volumes:
+      - "../backend:/usr/src"
+    networks:
+      dev_nikki_network:
+        ipv4_address: 172.23.0.2
+    tty: true
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17.2-bullseye
+    ports:
+      - "5432:5432"
+    volumes:
+      - "dev-nikki-data:/var/lib/postgresql/data"
+    networks:
+      dev_nikki_network:
+        ipv4_address: 172.23.0.4
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - TZ=${TZ}
+    tty: true
+
+  vk:
+    image: valkey/valkey:8.0.1-bookworm
+    ports:
+      - "6379:6379"
+    tty: true
