@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -15,21 +16,21 @@ const (
 	saltCount int    = 16
 )
 
-var count int64
+var emailCount int64
 
 // 同じemailが存在しないかをチェック
-func IsEmailExist(db *gorm.DB, e string) error {
-	db.Table("users").Count(&count)
-	if 0 == count {
+func IsEmailExist(e string) error {
+	DBC.DB.Table("users").Count(&emailCount)
+	if 0 == emailCount {
 		return nil
 	}
 
 	var user User
-	result := db.Find(&user, "email = ?", e)
+	result := DBC.DB.Find(&user, "email = ?", e)
 	if 0 == result.RowsAffected {
-		return errors.New("")
+		return nil
 	}
-	return nil
+	return errors.New(fmt.Sprintf("Failed: this email(%s) is already exist", e))
 }
 
 func GetPepper() string {
@@ -48,32 +49,17 @@ func GenerateSalt() string {
 	return string(salt)
 }
 
-// ユーザー作成
-func CreateUser(db *gorm.DB, userMap map[string]string) (*gorm.DB, User, error) {
-	// emailが一意なので存在していないかのチェック
-	// 残すは同じemailが既存在しないかをチェックするだけ。1/5
-	// p, err := PasswordHashing(userMap["password"], userMap["salt"])
-	// if err != nil {
-	// 	return db, User{}, err
-	// }
-
-	// もしも他に同じemailが存在していたらここでエラー吐き出して終わらせる。
-	// err = IsEmailExist(db, userMap["email"])
-	// if err != nil {
-	// 	return db, User{}, err
-	// }
-
+// ユーザー作成。n=name, e=email, p=password, s=salt
+func CreateUser(n, e, p, s string) (*gorm.DB, *User, error) {
 	user := &User{
-		Username: userMap["username"],
-		Email:    userMap["email"],
-		// Password: p,
-		Password: userMap["password"],
-		Salt:     userMap["salt"],
+		Username: n,
+		Email:    e,
+		Password: p,
+		Salt:     s,
 	}
-	result := db.Create(user)
+	result := DBC.DB.Create(user)
 	if result.Error != nil {
-		err := errors.New(result.Error.Error())
-		return result, User{}, err
+		return result, &User{}, result.Error
 	}
-	return result, *user, nil
+	return result, user, nil
 }

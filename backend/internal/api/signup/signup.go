@@ -1,45 +1,85 @@
 package signup
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 
 	"dev_nikki/internal/authN"
 	"dev_nikki/internal/models"
 )
 
-type signupFormData struct {
-	Status   string `json:"status"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+var (
+	userMap = map[string]string{
+		"name":     "",
+		"email":    "",
+		"password": "",
+		"salt":     "",
+	}
+)
+
+type userData struct {
+	name     string
+	email    string
+	password string
+	salt     string
 }
 
-func ReturnCreatedUserData(c echo.Context) error {
-	name := c.Request().FormValue("name")
-	email := c.Request().FormValue("email")
-	password := c.Request().FormValue("password")
+type responseData struct {
+	Status   string `json:"status"`
+	ID       uint   `json:"id"`
+	JWT      string `json:"jwt"`
+	ErrorMsg string `json:"errorMsg"`
+}
 
-	userMap := map[string]string{
-		"username": name,
-		"email":    email,
-		"password": password,
-		"salt":     authN.GenerateSalt(),
+func newUserData(m map[string]string) *userData {
+	return &userData{
+		name:     m["name"],
+		email:    m["email"],
+		password: m["password"],
+		salt:     m["salt"],
+	}
+}
+
+// バリデーションをした後に送られてきたデータを元にUserを作成してDBに保存する。
+func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
+	for k := range userMap {
+		userMap[k] = c.Request().FormValue(k)
+	}
+	u := newUserData(userMap)
+	slog.Info("check request form data", "name", u.name, "email", u.email, "pass", u.password)
+
+	if err := models.IsEmailExist(u.email); err != nil {
+		slog.Error("this email is already exist")
+		return models.DBC.DB, &models.User{}, err
 	}
 
-	fmt.Println("start!")
-	result, user, err := models.CreateUser(models.DBC.DB, userMap)
+	if err := authN.Validation(u.email, u.password); err != nil {
+		return models.DBC.DB, &models.User{}, err
+	} else {
+		u.salt = models.GenerateSalt()
+	}
+
+	if p, err := authN.PasswordHashing(u.password, u.salt); err != nil {
+		return models.DBC.DB, &models.User{}, err
+	} else {
+		u.password = p
+		return models.CreateUser(u.name, u.email, u.password, u.salt)
+	}
+}
+
+func SendUserData(c echo.Context) error {
+	_, user, err := createUser(c)
 
 	if err != nil {
-		d := &signupFormData{name, email, password, "failed"}
-		fmt.Println("signup-form data: ", d)
-		fmt.Println(err)
-		return c.JSON(http.StatusBadRequest, d)
+		slog.Error("Failed to create user", "error", err)
+		resp := responseData{Status: "failed", ErrorMsg: err.Error()}
+		return c.JSON(http.StatusUnprocessableEntity, resp)
 	}
 
-	d := signupFormData{name, email, password, "success!"}
-	fmt.Println(result, user, d)
-	return c.JSON(http.StatusOK, user)
+	slog.Info("Success to create user", "user", user)
+	resp := responseData{"success", user.ID, "jwt", ""}
+	return c.JSON(http.StatusOK, resp)
 }
