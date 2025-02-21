@@ -2,11 +2,11 @@ package models
 
 import (
 	"fmt"
-	"log/slog"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"dev_nikki/internal/logger"
 	"dev_nikki/pkg/utils"
 )
 
@@ -42,7 +42,7 @@ func (c *DBConnector) CreateDSN(s []any) {
 		if v, ok := s[i].(string); ok {
 			s[i] = m[v]
 		} else {
-			slog.Error("Failed: dsnElmyArray elements contain not string")
+			logger.Slog.Error("Failed: dsnElmyArray elements contain not string")
 		}
 	}
 	c.DSN = fmt.Sprintf(dsn, s...)
@@ -52,7 +52,7 @@ func (c *DBConnector) CreateDSN(s []any) {
 func (c *DBConnector) ConnectDB() {
 	db, err := gorm.Open(postgres.Open(c.DSN), &gorm.Config{})
 	if err != nil {
-		slog.Error("Failed: " + err.Error())
+		logger.Slog.Error("Failed: " + err.Error())
 	}
 	c.DB = db
 }

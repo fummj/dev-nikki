@@ -1,13 +1,13 @@
 package signup
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 
 	"dev_nikki/internal/authN"
+	"dev_nikki/internal/logger"
 	"dev_nikki/internal/models"
 )
 
@@ -49,10 +49,10 @@ func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
 		userMap[k] = c.Request().FormValue(k)
 	}
 	u := newUserData(userMap)
-	slog.Info("check request form data", "name", u.name, "email", u.email, "pass", u.password)
+	logger.Slog.Info("check request form data", "name", u.name, "email", u.email, "pass", u.password)
 
 	if err := models.IsEmailExist(u.email); err != nil {
-		slog.Error("this email is already exist")
+		logger.Slog.Error("this email is already exist")
 		return models.DBC.DB, &models.User{}, err
 	}
 
@@ -74,12 +74,12 @@ func SendUserData(c echo.Context) error {
 	_, user, err := createUser(c)
 
 	if err != nil {
-		slog.Error("Failed to create user", "error", err)
+		logger.Slog.Error("Failed to create user", "error", err)
 		resp := responseData{Status: "failed", ErrorMsg: err.Error()}
 		return c.JSON(http.StatusUnprocessableEntity, resp)
 	}
 
-	slog.Info("Success to create user", "user", user)
+	logger.Slog.Info("Success to create user", "user", user)
 	resp := responseData{"success", user.ID, "jwt", ""}
 	return c.JSON(http.StatusOK, resp)
 }

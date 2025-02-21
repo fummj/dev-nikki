@@ -2,20 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
-	"os"
 
 	"github.com/labstack/echo/v4"
 
 	"dev_nikki/internal/api/login"
 	"dev_nikki/internal/api/signup"
-	// authn "dev_nikki/internal/authN"
 	"dev_nikki/internal/handlers/index"
 )
-
-func init() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
-}
 
 func main() {
 	app := echo.New()

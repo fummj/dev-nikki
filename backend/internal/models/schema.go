@@ -1,9 +1,9 @@
 package models
 
 import (
-	"log/slog"
-
 	"gorm.io/gorm"
+
+	"dev_nikki/internal/logger"
 )
 
 type User struct {
@@ -48,7 +48,7 @@ func IsExistTable(db *gorm.DB) bool {
 // テーブルの有無確認して、存在しない場合は作成
 func FirstMigration(db *gorm.DB) {
 	if IsExistTable(db) {
-		slog.Debug("the table already exists", "method", "FirstMigration")
+		logger.Slog.Debug("the table already exists", "method", "FirstMigration")
 		return
 	}
 
@@ -59,9 +59,9 @@ func FirstMigration(db *gorm.DB) {
 		&File{},
 	)
 	if err != nil {
-		slog.Error("Failed: "+err.Error(), "method", "FirstMigration")
+		logger.Slog.Error("Failed: "+err.Error(), "method", "FirstMigration")
 	}
-	slog.Info("all tables have been initialized", "method", "FirstMigration")
+	logger.Slog.Info("all tables have been initialized", "method", "FirstMigration")
 }
 
 // 全テーブル削除
@@ -73,8 +73,8 @@ func AllDropTables(db *gorm.DB) {
 		&File{},
 	)
 	if err != nil {
-		slog.Error("Failed: "+err.Error(), "method", "AllDropTables")
+		logger.Slog.Error("Failed: "+err.Error(), "method", "AllDropTables")
 		return
 	}
-	slog.Info("all droped", "method", "AllDropTables")
+	logger.Slog.Info("all droped", "method", "AllDropTables")
 }

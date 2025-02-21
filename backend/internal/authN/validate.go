@@ -3,9 +3,10 @@ package authN
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"regexp"
 	"unicode/utf8"
+
+	"dev_nikki/internal/logger"
 )
 
 var (
@@ -30,7 +31,7 @@ var passwordPatterns []string = []string{
 // emailのバリデーションチェック
 func EmailValidation(e string) error {
 	if utf8.RuneCountInString(e) > maxEmailLen {
-		slog.Error("this email is too long", "email", e)
+		logger.Slog.Error("this email is too long", "email", e)
 		return emailValidationError
 	}
 
@@ -45,7 +46,7 @@ func EmailValidation(e string) error {
 func PasswordValidation(p string) error {
 	count := utf8.RuneCountInString(p)
 	if count < minPasswordLen && count > maxPasswordLen {
-		slog.Error("this password is too long", "password", p)
+		logger.Slog.Error("this password is too long", "password", p)
 		return passwordValidationError
 	}
 
