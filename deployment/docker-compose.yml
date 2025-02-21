@@ -18,6 +18,8 @@ services:
     networks:
       dev_nikki_network:
         ipv4_address: 172.23.0.2
+    environment:
+      - TZ=${TZ}
     tty: true
     depends_on:
       - db
@@ -42,4 +44,6 @@ services:
     image: valkey/valkey:8.0.1-bookworm
     ports:
       - "6379:6379"
+    environment:
+      - TZ=${TZ}
     tty: true
