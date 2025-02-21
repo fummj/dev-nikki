@@ -1,14 +1,11 @@
 package authN
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"log/slog"
 	"regexp"
 	"unicode/utf8"
-
-	"dev_nikki/internal/models"
 )
 
 var (
@@ -75,15 +72,4 @@ func Validation(e string, p string) error {
 	}
 
 	return nil
-}
-
-func PasswordHashing(p string, salt string) (string, error) {
-	b := salt + p + models.GetPepper()
-	h := sha256.New()
-	h.Write([]byte(b))
-	s := fmt.Sprintf("%x", string(h.Sum(nil)))
-
-	slog.Debug("completed password hashing", "hashed", s)
-
-	return s, nil
 }
