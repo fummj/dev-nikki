@@ -17,7 +17,7 @@ func main() {
 	wildCardHandler := index.WildCardHandler{}
 
 	app.POST("/api/login", login.ReturnFormData)
-	app.POST("/api/signup", signup.SendUserData)
+	app.POST("/api/signup", signup.SignUp)
 	app.GET("/*", wildCardHandler.FallbackToIndex)
 
 	fmt.Print("🛎️  dev_nikki 🛎️" + "\n")
