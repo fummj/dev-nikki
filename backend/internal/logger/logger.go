@@ -47,10 +47,8 @@ func (h *CustomJsonHandler) Handle(ctx context.Context, r slog.Record) error {
 	logAttr := map[string]any{}
 
 	for attr := range r.Attrs {
-		fmt.Println(attr.Key, attr.Value)
 		logAttr[attr.Key] = attr.Value.String()
 	}
-	fmt.Println("logAttr", logAttr)
 
 	jsonLog, err := json.Marshal(logMessage)
 	if err != nil {
@@ -62,7 +60,7 @@ func (h *CustomJsonHandler) Handle(ctx context.Context, r slog.Record) error {
 		return err
 	}
 
-	fmt.Printf("%s%s%s%s%s", level, r.Level.String()+": ", jsonLog, jsonLogAttr, end)
+	fmt.Printf("%s%s: %s %s: %s%s", level, "Log", jsonLog, "Attrs", jsonLogAttr, end)
 
 	return nil
 }
