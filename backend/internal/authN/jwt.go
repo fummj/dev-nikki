@@ -25,6 +25,8 @@ var (
 	exp                  time.Time     = time.Now().Add(period)
 	iat                  time.Time     = time.Now()
 	jti                  string        = uuid.NewString()
+
+	KeysKeeper jwtKeysKeeper = NewJWTKeysKeeper()
 )
 
 type CustomClaim struct {
@@ -55,6 +57,7 @@ func CreatePreSignedToken(u CustomClaim) *jwt.Token {
 	return t
 }
 
+// 署名されたトークンを返す。
 func CreateJWT(t *jwt.Token, key jwtKeysKeeper) (string, error) {
 	tokenString, err := t.SignedString(key.Priv)
 	if err != nil {
