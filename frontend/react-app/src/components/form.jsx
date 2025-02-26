@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
@@ -50,16 +51,20 @@ function passwordValidation(
   }
 }
 
-async function getData(isLogin) {
+async function fetchResultAuth(isLogin, navFunc) {
   let formData = new FormData(document.getElementById("form"));
   console.log("formData: ", formData);
-  // const response = await fetch("http://localhost:8080/api/login", {
-  const response = await fetch(isLogin ? loginPath : signupPath, {
-    method: "POST",
-    body: formData,
-  });
-  const data = await response.json();
-  console.log(data);
+  try {
+    const response = await fetch(isLogin ? loginPath : signupPath, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    navFunc();
+    console.log(data);
+  } catch (error) {
+    console.log("Error fetch data: ", error);
+  }
 }
 
 const togglePassword = (isRevealState, setIsRevealStateFunc) => {
@@ -112,6 +117,12 @@ const LoginForm = (isLogin) => {
     password: "",
   });
   const [isRevealPassword, setIsRevealPassword] = useState(false);
+
+  const navigate = useNavigate();
+  function handleHome() {
+    console.log("home page");
+    navigate("/home");
+  }
 
   return (
     <>
@@ -168,7 +179,7 @@ const LoginForm = (isLogin) => {
             }
             type="button"
             value="送信"
-            onClick={() => getData(isLogin)}
+            onClick={() => fetchResultAuth(isLogin, handleHome)}
           />
           <div className={"flex flex-col text-sm text-center text-rose-600"}>
             {/*email, passwordのエラーメッセージを表示*/}

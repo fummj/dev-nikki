@@ -11,6 +11,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	"dev_nikki/internal/logger"
 )
 
 var (
@@ -85,10 +87,10 @@ func ParseJWT(s string, key ed25519.PublicKey) (*jwt.Token, error) {
 	}
 
 	if !t.Valid {
-		return t, errors.New("invalid token in ParseJWT()")
+		return t, errors.New("invalid token in ParseJWT function")
 	}
 
-	fmt.Println("hello", t.Claims)
+	logger.Slog.Info("ParseJWT", "claims", t.Claims)
 	return t, err
 }
 

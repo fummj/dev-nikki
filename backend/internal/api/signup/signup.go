@@ -27,10 +27,10 @@ type userData struct {
 	salt     string
 }
 
-type responseData struct {
+type signupResponseData struct {
 	Status   string `json:"status"`
 	ID       uint   `json:"id"`
-	JWT      string `json:"jwt"`
+	Username string `json:"username"`
 	ErrorMsg string `json:"errorMsg"`
 }
 
@@ -87,18 +87,19 @@ func SignUp(c echo.Context) error {
 
 	if err != nil {
 		logger.Slog.Error("Failed to create user", "error", err)
-		resp := responseData{Status: "failed", ErrorMsg: err.Error()}
+		resp := signupResponseData{Status: "failed", ErrorMsg: err.Error()}
 		return c.JSON(http.StatusUnprocessableEntity, resp)
 	}
 
 	tokenString, err := generateJWT(user)
 	if err != nil {
-		logger.Slog.Error("Failed to create user", "error", err)
-		resp := responseData{Status: "failed", ErrorMsg: err.Error()}
+		logger.Slog.Error("Failed to create JWT", "error", err)
+		resp := signupResponseData{Status: "failed", ErrorMsg: err.Error()}
 		return c.JSON(http.StatusUnprocessableEntity, resp)
 	}
 
-	logger.Slog.Info("Success to create user", "user", user)
-	resp := responseData{"success", user.ID, tokenString, ""}
+	logger.Slog.Info("Success to create user, JWT", "user", user)
+	resp := signupResponseData{"success", user.ID, user.Username, ""}
+	authN.SetJWTCookie(c, tokenString)
 	return c.JSON(http.StatusOK, resp)
 }
