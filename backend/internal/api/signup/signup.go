@@ -37,7 +37,7 @@ type userData struct {
 	salt     string
 }
 
-type signupResponseData struct {
+type signupResponse struct {
 	Status   string `json:"status"`
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
@@ -108,7 +108,7 @@ func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
 }
 
 // 署名されたJWTを生成する。
-func generateJWT(u *models.User) (string, error) {
+func GenerateJWT(u *models.User) (string, error) {
 	claim := authN.NewClaim(int(u.ID), u.Username, u.Email)
 	tokenString, err := authN.CreateJWT(authN.CreatePreSignedToken(claim), authN.KeysKeeper)
 
@@ -124,19 +124,19 @@ func SignUp(c echo.Context) error {
 
 	if err != nil {
 		logger.Slog.Error("Failed to create user", "error", err)
-		resp := signupResponseData{Status: "failed", ErrorMsg: err.Error()}
+		resp := signupResponse{Status: "failed", ErrorMsg: err.Error()}
 		return c.JSON(http.StatusUnprocessableEntity, resp)
 	}
 
-	tokenString, err := generateJWT(user)
+	tokenString, err := GenerateJWT(user)
 	if err != nil {
 		logger.Slog.Error("Failed to create JWT", "error", err)
-		resp := signupResponseData{Status: "failed", ErrorMsg: err.Error()}
+		resp := signupResponse{Status: "failed", ErrorMsg: err.Error()}
 		return c.JSON(http.StatusUnprocessableEntity, resp)
 	}
 
 	logger.Slog.Info("Success to create user, JWT", "user", user)
-	resp := signupResponseData{"success", user.ID, user.Username, ""}
+	resp := signupResponse{"success", user.ID, user.Username, ""}
 	authN.SetJWTCookie(c, tokenString)
 	return c.JSON(http.StatusOK, resp)
 }

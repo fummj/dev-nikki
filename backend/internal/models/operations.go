@@ -5,11 +5,17 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+
+	"dev_nikki/internal/logger"
 )
 
-var emailCount int64
+var (
+	notExisitEmailError = errors.New("this email is not exist")
 
-// 同じemailが存在しないかをチェック
+	emailCount int64
+)
+
+// 同じemailが存在しないかをチェック。emailが存在していたらerrorを返す。e=email
 func IsEmailExist(e string) error {
 	DBC.DB.Table("users").Count(&emailCount)
 	if 0 == emailCount {
@@ -22,6 +28,32 @@ func IsEmailExist(e string) error {
 		return nil
 	}
 	return errors.New(fmt.Sprintf("Failed: this email(%s) is already exist", e))
+}
+
+// ユーザー取得。e=email
+func getUser(e string) (*gorm.DB, *User, error) {
+	user := &User{Email: e}
+	result := DBC.DB.Where("email = ?", e).Take(user)
+	if result.Error != nil {
+		return result, &User{}, result.Error
+	}
+	return result, user, nil
+}
+
+func GetExistUser(e string) (*User, error) {
+	err := IsEmailExist(e)
+	if err == nil {
+		logger.Slog.Error("does not exist this email", "email", e)
+		return &User{}, notExisitEmailError
+	}
+
+	_, u, err := getUser(e)
+	if err != nil {
+		logger.Slog.Error("falied get user from db", "error", err)
+		return &User{}, err
+	}
+
+	return u, nil
 }
 
 // ユーザー作成。n=name, e=email, p=password, s=salt

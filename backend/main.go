@@ -17,7 +17,7 @@ func main() {
 
 	wildCardHandler := index.WildCardHandler{}
 
-	app.POST("/api/login", login.ReturnFormData)
+	app.POST("/api/login", login.Login)
 	app.POST("/api/signup", signup.SignUp)
 	app.GET("/api/home", home.Home)
 	app.GET("/*", wildCardHandler.FallbackToIndex)
