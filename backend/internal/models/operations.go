@@ -3,17 +3,8 @@ package models
 import (
 	"errors"
 	"fmt"
-	"math/rand"
-	"time"
 
 	"gorm.io/gorm"
-
-	"dev_nikki/pkg/utils"
-)
-
-const (
-	charset   string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	saltCount int    = 16
 )
 
 var emailCount int64
@@ -31,22 +22,6 @@ func IsEmailExist(e string) error {
 		return nil
 	}
 	return errors.New(fmt.Sprintf("Failed: this email(%s) is already exist", e))
-}
-
-func GetPepper() string {
-	p := utils.GetEnv(EnvPath)["PEPPER"]
-	return p
-}
-
-func GenerateSalt() string {
-	salt := make([]byte, saltCount)
-	randSeed := rand.New(rand.NewSource(time.Now().UnixNano()))
-	for i := 0; i < saltCount; i++ {
-		r := randSeed.Intn(len(charset))
-		salt[i] = charset[r]
-	}
-
-	return string(salt)
 }
 
 // ユーザー作成。n=name, e=email, p=password, s=salt

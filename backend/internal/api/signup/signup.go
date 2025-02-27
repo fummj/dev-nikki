@@ -1,7 +1,11 @@
 package signup
 
 import (
+	"crypto/sha256"
+	"fmt"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -9,6 +13,12 @@ import (
 	"dev_nikki/internal/authN"
 	"dev_nikki/internal/logger"
 	"dev_nikki/internal/models"
+	"dev_nikki/pkg/utils"
+)
+
+const (
+	charset   string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	saltCount int    = 16
 )
 
 var (
@@ -32,6 +42,33 @@ type signupResponseData struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
 	ErrorMsg string `json:"errorMsg"`
+}
+
+func GetPepper() string {
+	p := utils.GetEnv(models.EnvPath)["PEPPER"]
+	return p
+}
+
+func GenerateSalt() string {
+	salt := make([]byte, saltCount)
+	randSeed := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < saltCount; i++ {
+		r := randSeed.Intn(len(charset))
+		salt[i] = charset[r]
+	}
+
+	return string(salt)
+}
+
+func PasswordHashing(p string, salt string) (string, error) {
+	b := salt + p + GetPepper()
+	h := sha256.New()
+	h.Write([]byte(b))
+	s := fmt.Sprintf("%x", string(h.Sum(nil)))
+
+	logger.Slog.Debug("completed password hashing", "hashed", s)
+
+	return s, nil
 }
 
 func newUserData(m map[string]string) *userData {
@@ -59,10 +96,10 @@ func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
 	if err := authN.Validation(u.email, u.password); err != nil {
 		return models.DBC.DB, &models.User{}, err
 	} else {
-		u.salt = models.GenerateSalt()
+		u.salt = GenerateSalt()
 	}
 
-	if p, err := authN.PasswordHashing(u.password, u.salt); err != nil {
+	if p, err := PasswordHashing(u.password, u.salt); err != nil {
 		return models.DBC.DB, &models.User{}, err
 	} else {
 		u.password = p
