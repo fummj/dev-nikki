@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { faEye } from "@fortawesome/free-regular-svg-icons";
 
-import HeaderNav from "./header_nav.jsx";
 import "./form.css";
 
 const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -126,7 +125,6 @@ const LoginForm = (isLogin) => {
 
   return (
     <>
-      <HeaderNav />
       <div className={"w-104 m-auto"}>
         <form
           id="form"

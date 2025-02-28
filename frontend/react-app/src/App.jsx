@@ -9,6 +9,7 @@ import "./App.css";
 
 const App = () => {
   useEffect(() => {
+    // FIX: これでも他のコンポーネントをレンダリングした際にズレが一瞬見える。
     document.body.style.visibility = "visible";
   }, []);
 
