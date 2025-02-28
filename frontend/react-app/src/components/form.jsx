@@ -50,22 +50,6 @@ function passwordValidation(
   }
 }
 
-async function fetchResultAuth(isLogin, navFunc) {
-  let formData = new FormData(document.getElementById("form"));
-  console.log("formData: ", formData);
-  try {
-    const response = await fetch(isLogin ? loginPath : signupPath, {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-    navFunc();
-    console.log(data);
-  } catch (error) {
-    console.log("Error fetch data: ", error);
-  }
-}
-
 const togglePassword = (isRevealState, setIsRevealStateFunc) => {
   setIsRevealStateFunc((isRevealState) => !isRevealState);
 };
@@ -86,6 +70,7 @@ const displayError = (errorState) => {
       <span>
         {errorState.email}
         {errorState.password}
+        {errorState.responseMsg}
       </span>
     );
   }
@@ -114,6 +99,7 @@ const LoginForm = (isLogin) => {
   const [error, setError] = useState({
     email: "",
     password: "",
+    responseMsg: "",
   });
   const [isRevealPassword, setIsRevealPassword] = useState(false);
 
@@ -121,6 +107,27 @@ const LoginForm = (isLogin) => {
   function handleHome() {
     console.log("home page");
     navigate("/home");
+  }
+
+  async function fetchResultAuth(isLogin, navFunc) {
+    let formData = new FormData(document.getElementById("form"));
+    console.log("formData: ", formData);
+    try {
+      const response = await fetch(isLogin ? loginPath : signupPath, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.errorMsg !== "") {
+        setError({ ...error, responseMsg: data.errorMsg });
+        console.log("login failed: ", data.errorMsg, error);
+      } else {
+        navFunc();
+      }
+      console.log(data);
+    } catch (error) {
+      console.log("Error fetch data: ", error);
+    }
   }
 
   return (

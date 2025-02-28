@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	loginError = errors.New("login failed")
+	loginError = errors.New("メールアドレスかパスワードが正しくありません。")
 
-	loginFailedResponse  = loginResponse{"failed", 0, "", loginError}
+	loginFailedResponse  = loginResponse{"failed", 0, "", loginError.Error()}
 	noMatchPasswordError = errors.New("password do not match")
 )
 
@@ -23,7 +23,7 @@ type loginResponse struct {
 	Status   string `json:"status"`
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
-	ErrorMsg error  `json:"errorMsg"`
+	ErrorMsg string `json:"errorMsg"`
 }
 
 // requestのpassword(hashed)がDB内のものと一致するかの検証。 p=requestのpassword
@@ -65,6 +65,6 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, loginFailedResponse)
 	}
 	authN.SetJWTCookie(c, tokenString)
-	resp := loginResponse{"success login", u.ID, u.Username, nil}
+	resp := loginResponse{"success login", u.ID, u.Username, ""}
 	return c.JSON(http.StatusOK, resp)
 }
