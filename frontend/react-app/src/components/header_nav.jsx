@@ -31,7 +31,7 @@ const HeaderNav = () => {
 
   return (
     <header className="mr-10">
-      <div className="header-inner py-5">
+      <div className="header-inner mt-5">
         <nav className="flex items-center justify-between">
           <div className="header-logo" onClick={handleRoot}>
             <svg
