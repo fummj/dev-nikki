@@ -13,10 +13,10 @@ import (
 )
 
 var (
-	loginError = errors.New("メールアドレスかパスワードが正しくありません。")
-
-	loginFailedResponse  = loginResponse{"failed", 0, "", loginError.Error()}
 	noMatchPasswordError = errors.New("password do not match")
+	loginError           = errors.New("メールアドレスかパスワードが正しくありません。")
+
+	loginFailedResponse = loginResponse{"failed", 0, "", loginError.Error()}
 )
 
 type loginResponse struct {

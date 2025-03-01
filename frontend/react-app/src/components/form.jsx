@@ -54,7 +54,7 @@ const togglePassword = (isRevealState, setIsRevealStateFunc) => {
   setIsRevealStateFunc((isRevealState) => !isRevealState);
 };
 
-const displayError = (errorState) => {
+const displayErrorMsg = (errorState) => {
   if (errorState.email !== "" && errorState.password !== "") {
     return (
       <>
@@ -65,6 +65,8 @@ const displayError = (errorState) => {
         </span>
       </>
     );
+  } else if (errorState.responseMsg !== "") {
+    return <span>{errorState.responseMsg}</span>;
   } else {
     return (
       <span>
@@ -119,7 +121,10 @@ const LoginForm = (isLogin) => {
       });
       const data = await response.json();
       if (data.errorMsg !== "") {
-        setError({ ...error, responseMsg: data.errorMsg });
+        setError({
+          ...error,
+          responseMsg: data.errorMsg,
+        });
         console.log("login failed: ", data.errorMsg, error);
       } else {
         navFunc();
@@ -149,9 +154,9 @@ const LoginForm = (isLogin) => {
             id="email"
             placeholder="メールアドレス"
             required
-            onChange={(e) =>
-              emailValidation(e, formData, setFormData, error, setError)
-            }
+            onChange={(e) => {
+              emailValidation(e, formData, setFormData, error, setError);
+            }}
           />
           <div
             className={
@@ -165,9 +170,9 @@ const LoginForm = (isLogin) => {
               id="password"
               placeholder="パスワード"
               required
-              onChange={(e) =>
-                passwordValidation(e, formData, setFormData, error, setError)
-              }
+              onChange={(e) => {
+                passwordValidation(e, formData, setFormData, error, setError);
+              }}
             />
             <span
               className={"py-2 px-2 pl-0"}
@@ -187,8 +192,8 @@ const LoginForm = (isLogin) => {
             onClick={() => fetchResultAuth(isLogin, handleHome)}
           />
           <div className={"flex flex-col text-sm text-center text-rose-600"}>
-            {/*email, passwordのエラーメッセージを表示*/}
-            {displayError(error)}
+            {/*全体のエラーメッセージを表示*/}
+            {displayErrorMsg(error)}
           </div>
         </form>
         {/*確認用*/}

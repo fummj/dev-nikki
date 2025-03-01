@@ -2,6 +2,7 @@ package signup
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -19,6 +20,12 @@ import (
 const (
 	charset   string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	saltCount int    = 16
+)
+
+var (
+	signupError = errors.New("すでにこのメールアドレスは存在しています。")
+
+	signupFailedResponse = signupResponse{"failed", 0, "", signupError.Error()}
 )
 
 var (
@@ -124,15 +131,13 @@ func SignUp(c echo.Context) error {
 
 	if err != nil {
 		logger.Slog.Error("Failed to create user", "error", err)
-		resp := signupResponse{Status: "failed", ErrorMsg: err.Error()}
-		return c.JSON(http.StatusUnprocessableEntity, resp)
+		return c.JSON(http.StatusUnprocessableEntity, signupFailedResponse)
 	}
 
 	tokenString, err := GenerateJWT(user)
 	if err != nil {
 		logger.Slog.Error("Failed to create JWT", "error", err)
-		resp := signupResponse{Status: "failed", ErrorMsg: err.Error()}
-		return c.JSON(http.StatusUnprocessableEntity, resp)
+		return c.JSON(http.StatusUnprocessableEntity, signupFailedResponse)
 	}
 
 	logger.Slog.Info("Success to create user, JWT", "user", user)
