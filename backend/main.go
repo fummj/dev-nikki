@@ -5,9 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"dev_nikki/internal/api/home"
-	"dev_nikki/internal/api/login"
-	"dev_nikki/internal/api/signup"
+	"dev_nikki/internal/handlers/api"
 	"dev_nikki/internal/handlers/index"
 )
 
@@ -15,11 +13,13 @@ func main() {
 	app := echo.New()
 	app.Static("/static", "./static/dist")
 
+	authHandler := api.AuthHandler{}
+	homeHandler := api.HomeHandler{}
 	wildCardHandler := index.WildCardHandler{}
 
-	app.POST("/api/login", login.Login)
-	app.POST("/api/signup", signup.SignUp)
-	app.GET("/api/home", home.Home)
+	app.POST("/api/login", authHandler.Login)
+	app.POST("/api/signup", authHandler.SignUp)
+	app.GET("/api/home", homeHandler.Home)
 	app.GET("/*", wildCardHandler.FallbackToIndex)
 
 	fmt.Print("🛎️  dev_nikki 🛎️" + "\n")
