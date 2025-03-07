@@ -20,7 +20,7 @@ var (
 	DBC                 = NewDBConnector(DsnElmyArray)
 )
 
-func Init() {
+func init() {
 	FirstMigration(DBC.DB)
 	// AllDropTables(DBC.DB)
 }
