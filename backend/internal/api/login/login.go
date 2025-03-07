@@ -59,7 +59,7 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, loginFailedResponse)
 	}
 
-	tokenString, err := signup.GenerateJWT(u)
+	tokenString, err := authN.GenerateJWT(u)
 	if err != nil {
 		logger.Slog.Error("Failed to create JWT", "error", err)
 		return c.JSON(http.StatusUnauthorized, loginFailedResponse)

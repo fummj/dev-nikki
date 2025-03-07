@@ -114,18 +114,6 @@ func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
 	}
 }
 
-// 署名されたJWTを生成する。
-func GenerateJWT(u *models.User) (string, error) {
-	claim := authN.NewClaim(int(u.ID), u.Username, u.Email)
-	tokenString, err := authN.CreateJWT(authN.CreatePreSignedToken(claim), authN.KeysKeeper)
-
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
-}
-
 func SignUp(c echo.Context) error {
 	_, user, err := createUser(c)
 
@@ -134,7 +122,7 @@ func SignUp(c echo.Context) error {
 		return c.JSON(http.StatusUnprocessableEntity, signupFailedResponse)
 	}
 
-	tokenString, err := GenerateJWT(user)
+	tokenString, err := authN.GenerateJWT(user)
 	if err != nil {
 		logger.Slog.Error("Failed to create JWT", "error", err)
 		return c.JSON(http.StatusUnprocessableEntity, signupFailedResponse)

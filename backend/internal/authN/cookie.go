@@ -17,7 +17,7 @@ func SetJWTCookie(c echo.Context, token string) {
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 
 	fmt.Println("SetJWTCookie cookie", cookie)

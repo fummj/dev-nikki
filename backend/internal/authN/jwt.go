@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"dev_nikki/internal/logger"
+	"dev_nikki/internal/models"
 )
 
 var (
@@ -59,9 +60,21 @@ func CreatePreSignedToken(u CustomClaim) *jwt.Token {
 	return t
 }
 
-// 署名されたトークンを返す。
-func CreateJWT(t *jwt.Token, key jwtKeysKeeper) (string, error) {
+// 署名されたJWTを生成して返す。
+func createJWT(t *jwt.Token, key jwtKeysKeeper) (string, error) {
 	tokenString, err := t.SignedString(key.Priv)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// 署名されたJWTを生成して返す。
+func GenerateJWT(u *models.User) (string, error) {
+	claim := NewClaim(int(u.ID), u.Username, u.Email)
+	tokenString, err := createJWT(CreatePreSignedToken(claim), KeysKeeper)
+
 	if err != nil {
 		return "", err
 	}

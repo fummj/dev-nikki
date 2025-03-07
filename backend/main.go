@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"dev_nikki/internal/authN"
 	"dev_nikki/internal/handlers/api"
 	"dev_nikki/internal/handlers/index"
 )
@@ -20,6 +21,8 @@ func main() {
 	app.POST("/api/login", authHandler.Login)
 	app.POST("/api/signup", authHandler.SignUp)
 	app.GET("/api/home", homeHandler.Home)
+	app.GET("/auth/login", authN.OAuth2)
+	app.GET("/auth/callback", authN.OAuth2Callback)
 	app.GET("/*", wildCardHandler.FallbackToIndex)
 
 	fmt.Print("🛎️  dev_nikki 🛎️" + "\n")
