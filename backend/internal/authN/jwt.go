@@ -11,12 +11,16 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 
 	"dev_nikki/internal/logger"
 	"dev_nikki/internal/models"
 )
 
 var (
+	CustomClaimsTypeAssertionError = errors.New("failed to type assertion: claim is not CustomClaim")
+	failedParseJWTError            = errors.New("invalid token in ParseJWT function")
+
 	publicKeyPath        string        = "public_jwt.pem"
 	privateKeyPath       string        = "private_jwt.pem"
 	errInvalidParseToKey error         = errors.New("does not match the parse format")
@@ -32,15 +36,15 @@ var (
 	KeysKeeper jwtKeysKeeper = NewJWTKeysKeeper()
 )
 
-type CustomClaim struct {
+type CustomClaims struct {
 	UserID   int    `json:"user_id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	jwt.RegisteredClaims
 }
 
-func NewClaim(id int, name, email string) CustomClaim {
-	return CustomClaim{
+func NewClaim(id int, name, email string) CustomClaims {
+	return CustomClaims{
 		UserID:   id,
 		Username: name,
 		Email:    email,
@@ -55,7 +59,7 @@ func NewClaim(id int, name, email string) CustomClaim {
 }
 
 // 署名する前のトークンを返す。
-func CreatePreSignedToken(u CustomClaim) *jwt.Token {
+func CreatePreSignedToken(u CustomClaims) *jwt.Token {
 	t := jwt.NewWithClaims(&jwt.SigningMethodEd25519{}, u)
 	return t
 }
@@ -83,8 +87,7 @@ func GenerateJWT(u *models.User) (string, error) {
 }
 
 func ParseJWT(s string, key ed25519.PublicKey) (*jwt.Token, error) {
-	var claims CustomClaim
-	// ↓
+	var claims CustomClaims
 	t, err := jwt.ParseWithClaims(s, &claims, func(token *jwt.Token) (any, error) {
 		if token.Header["alg"] == algorithm {
 			err := token.Method.Verify(s, token.Signature, key)
@@ -100,11 +103,37 @@ func ParseJWT(s string, key ed25519.PublicKey) (*jwt.Token, error) {
 	}
 
 	if !t.Valid {
-		return t, errors.New("invalid token in ParseJWT function")
+		return t, failedParseJWTError
 	}
 
 	logger.Slog.Info("ParseJWT", "claims", t.Claims)
 	return t, err
+}
+
+// JWTからclaimsを抽出しCustomClaimsを生成。
+func extractCustomClaims(t *jwt.Token) (*CustomClaims, error) {
+	claims, ok := t.Claims.(*CustomClaims)
+	if !ok {
+		return &CustomClaims{}, CustomClaimsTypeAssertionError
+	}
+
+	return claims, nil
+}
+
+// cookieにあるJWTからCustomClaimsを生成。
+func GetExtractedCustomClaims(c echo.Context) (*CustomClaims, error) {
+	t, err := ParseJWTCookie(c)
+	if err != nil {
+		logger.Slog.Error("cause wrong JWT, can't access pre-home", "error", err, "JWT", t)
+		return &CustomClaims{}, err
+	}
+
+	claims, err := extractCustomClaims(t)
+	if err != nil {
+		return &CustomClaims{}, err
+	}
+
+	return claims, nil
 }
 
 type keyLoader interface {
@@ -173,13 +202,13 @@ func (keys *jwtKeysKeeper) parseToPublicKey(pem *pem.Block) error {
 func (keys *jwtKeysKeeper) Load() {
 	privPem, err := keys.extractPemData(keys.privPath)
 	if err != nil {
-		fmt.Println(err)
+		logger.Slog.Error(err.Error())
 	}
 	keys.parseToPrivateKey(privPem)
 
 	publPem, err := keys.extractPemData(keys.publPath)
 	if err != nil {
-		fmt.Println(err)
+		logger.Slog.Error(err.Error())
 	}
 	keys.parseToPublicKey(publPem)
 }
