@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"dev_nikki/internal/api/response"
 	"dev_nikki/internal/api/signup"
 	"dev_nikki/internal/authN"
 	"dev_nikki/internal/logger"
@@ -16,15 +17,15 @@ var (
 	noMatchPasswordError = errors.New("password do not match")
 	loginError           = errors.New("メールアドレスかパスワードが正しくありません。")
 
-	loginFailedResponse = loginResponse{"failed", 0, "", loginError.Error()}
+	loginFailedResponse = response.LoginResponse{
+		Common: response.CommonResponse{
+			Status:   "failed",
+			UserID:   0,
+			Username: "",
+			ErrorMsg: loginError.Error(),
+		},
+	}
 )
-
-type loginResponse struct {
-	Status   string `json:"status"`
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
-	ErrorMsg string `json:"errorMsg"`
-}
 
 // requestのpassword(hashed)がDB内のものと一致するかの検証。 p=requestのpassword
 func verifyHashedPassword(p string, u *models.User) error {
@@ -65,6 +66,13 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, loginFailedResponse)
 	}
 	authN.SetJWTCookie(c, tokenString)
-	resp := loginResponse{"success login", u.ID, u.Username, ""}
+	resp := response.LoginResponse{
+		Common: response.CommonResponse{
+			Status:   "success login",
+			UserID:   u.ID,
+			Username: u.Username,
+			ErrorMsg: "",
+		},
+	}
 	return c.JSON(http.StatusOK, resp)
 }

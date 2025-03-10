@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 
+	"dev_nikki/internal/api/response"
 	"dev_nikki/internal/authN"
 	"dev_nikki/internal/logger"
 	"dev_nikki/internal/models"
@@ -25,7 +26,14 @@ const (
 var (
 	signupError = errors.New("すでにこのメールアドレスは存在しています。")
 
-	signupFailedResponse = signupResponse{"failed", 0, "", signupError.Error()}
+	signupFailedResponse = response.SignUpResponse{
+		Common: response.CommonResponse{
+			Status:   "failed",
+			UserID:   0,
+			Username: "",
+			ErrorMsg: signupError.Error(),
+		},
+	}
 )
 
 var (
@@ -42,13 +50,6 @@ type userData struct {
 	email    string
 	password string
 	salt     string
-}
-
-type signupResponse struct {
-	Status   string `json:"status"`
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
-	ErrorMsg string `json:"errorMsg"`
 }
 
 func GetPepper() string {
@@ -115,21 +116,28 @@ func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
 }
 
 func SignUp(c echo.Context) error {
-	_, user, err := createUser(c)
+	_, u, err := createUser(c)
 
 	if err != nil {
 		logger.Slog.Error("Failed to create user", "error", err)
 		return c.JSON(http.StatusUnprocessableEntity, signupFailedResponse)
 	}
 
-	tokenString, err := authN.GenerateJWT(user)
+	tokenString, err := authN.GenerateJWT(u)
 	if err != nil {
 		logger.Slog.Error("Failed to create JWT", "error", err)
 		return c.JSON(http.StatusUnprocessableEntity, signupFailedResponse)
 	}
 
-	logger.Slog.Info("Success to create user, JWT", "user", user)
-	resp := signupResponse{"success", user.ID, user.Username, ""}
+	logger.Slog.Info("Success to create user, JWT", "user", u)
+	resp := response.SignUpResponse{
+		Common: response.CommonResponse{
+			Status:   "success signup",
+			UserID:   u.ID,
+			Username: u.Username,
+			ErrorMsg: "",
+		},
+	}
 	authN.SetJWTCookie(c, tokenString)
 	return c.JSON(http.StatusOK, resp)
 }
