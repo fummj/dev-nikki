@@ -19,7 +19,7 @@ import (
 const (
 	googleURL          = "https://accounts.google.com"
 	redirectURL        = "http://localhost:8080/auth/callback"
-	successRedirectURL = "http://localhost:8080/api/home"
+	successRedirectURL = "http://localhost:8080/api/pre-home"
 )
 
 var (

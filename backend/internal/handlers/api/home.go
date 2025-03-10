@@ -12,3 +12,7 @@ type HomeHandler struct {
 func (h HomeHandler) Home(c echo.Context) error {
 	return home.Home(c)
 }
+
+func (h HomeHandler) PreHome(c echo.Context) error {
+	return home.PreHome(c)
+}

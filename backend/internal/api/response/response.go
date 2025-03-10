@@ -22,9 +22,7 @@ type SignUpResponse struct {
 }
 
 type PreHomeResponse struct {
-	Common CommonResponse
-	// TODO: projectをまとめたやつを送るのではなく、
-	// プロジェクト名と直近いつ編集したかの情報だけで良いと思う。
+	Common   CommonResponse
 	Projects []models.Project `json:"projects"`
 }
 

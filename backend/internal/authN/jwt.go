@@ -37,13 +37,13 @@ var (
 )
 
 type CustomClaims struct {
-	UserID   int    `json:"user_id"`
+	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	jwt.RegisteredClaims
 }
 
-func NewClaim(id int, name, email string) CustomClaims {
+func NewClaim(id uint, name, email string) CustomClaims {
 	return CustomClaims{
 		UserID:   id,
 		Username: name,
@@ -76,7 +76,7 @@ func createJWT(t *jwt.Token, key jwtKeysKeeper) (string, error) {
 
 // 署名されたJWTを生成して返す。
 func GenerateJWT(u *models.User) (string, error) {
-	claim := NewClaim(int(u.ID), u.Username, u.Email)
+	claim := NewClaim(u.ID, u.Username, u.Email)
 	tokenString, err := createJWT(CreatePreSignedToken(claim), KeysKeeper)
 
 	if err != nil {

@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	notExisitEmailError = errors.New("this email is not exist")
+	notExisitEmailError    = errors.New("this email is not exist")
+	failedGetProjectsError = errors.New("failed to get projects")
 
 	emailCount int64
 )
@@ -69,4 +70,15 @@ func CreateUser(n, e, p, s string) (*gorm.DB, *User, error) {
 		return result, &User{}, result.Error
 	}
 	return result, user, nil
+}
+
+// プロジェクト取得。
+func GetProjects(id uint) (*gorm.DB, []Project, error) {
+	project := []Project{}
+	result := DBC.DB.Find(project, DBC.DB.Where("usee_id = ?", id))
+	if result.Error != nil {
+		logger.Slog.Error("failed to get user's projects", "error", result.Error.Error())
+		return result, project, failedGetProjectsError
+	}
+	return result, project, nil
 }
