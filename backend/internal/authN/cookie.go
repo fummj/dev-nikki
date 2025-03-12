@@ -11,7 +11,7 @@ import (
 )
 
 // cookieにJWTを保存。
-func SetJWTCookie(c echo.Context, token string) {
+func SetJWTCookie(c any, token string) {
 	cookie := &http.Cookie{
 		Name:     "access_token",
 		Value:    token,
@@ -20,8 +20,20 @@ func SetJWTCookie(c echo.Context, token string) {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	fmt.Println("SetJWTCookie cookie", cookie)
-	c.SetCookie(cookie)
+	echoContext, ok := c.(echo.Context)
+	if ok {
+		fmt.Println("SetJWTCookie cookie(echo.Context)", cookie)
+		echoContext.SetCookie(cookie)
+		return
+	}
+
+	req, ok := c.(*http.Request)
+	if ok {
+		fmt.Println("SetJWTCookie cookie(http.Request)", cookie)
+		req.AddCookie(cookie)
+		return
+	}
+
 }
 
 // cookieのJWTを検証

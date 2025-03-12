@@ -15,6 +15,7 @@ import (
 var (
 	unAuthorizedError = errors.New("不正なアクセスです。")
 	preHomeError      = errors.New("pre-homeで問題が発生してアクセスできません。")
+	notExistUserErrr  = errors.New("このアカウントは存在していません。")
 
 	preHomeFailedResponse = response.PreHomeResponse{
 		Common: response.CommonResponse{
@@ -36,8 +37,13 @@ func PreHome(c echo.Context) error {
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
 
+	u, err := models.GetExistUser(claims.Email)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, "goodnight")
+	}
+
 	// models.GetProjectsでUserIDに紐づいたProjectを全て取得し、frontにかえす。
-	_, project, err := models.GetProjects(uint(claims.UserID))
+	_, project, err := models.GetProjects(u.ID)
 	if err != nil {
 		logger.Slog.Error(err.Error())
 		return c.JSON(http.StatusInternalServerError, preHomeFailedResponse)
@@ -64,5 +70,12 @@ func Home(c echo.Context) error {
 	}
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
+
+	u, err := models.GetExistUser(claims.Email)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, "goodnight")
+	}
+
+	logger.Slog.Info("for now ", "User struct", u)
 	return c.JSON(http.StatusOK, claims)
 }

@@ -74,11 +74,11 @@ func CreateUser(n, e, p, s string) (*gorm.DB, *User, error) {
 
 // プロジェクト取得。
 func GetProjects(id uint) (*gorm.DB, []Project, error) {
-	project := []Project{}
-	result := DBC.DB.Find(project, DBC.DB.Where("usee_id = ?", id))
+	var projects []Project
+	result := DBC.DB.Where(&Project{UserID: id}, "user_id").Find(&projects)
 	if result.Error != nil {
 		logger.Slog.Error("failed to get user's projects", "error", result.Error.Error())
-		return result, project, failedGetProjectsError
+		return result, projects, failedGetProjectsError
 	}
-	return result, project, nil
+	return result, projects, nil
 }

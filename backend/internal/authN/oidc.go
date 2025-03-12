@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -19,7 +20,8 @@ import (
 const (
 	googleURL          = "https://accounts.google.com"
 	redirectURL        = "http://localhost:8080/auth/callback"
-	successRedirectURL = "http://localhost:8080/api/pre-home"
+	successRedirectURL = "http://localhost:8080/home"
+	successRequestURL  = "http://localhost:8080/api/pre-home"
 )
 
 var (
@@ -60,17 +62,46 @@ func generateState() string {
 	return state
 }
 
+func afterSuccessedOAuth2(c echo.Context, t string) ([]byte, error) {
+	// successRequestURLのリクエスト用
+	req, err := http.NewRequest("GET", successRequestURL, http.NoBody)
+	if err != nil {
+		return []byte{}, err
+	}
+	SetJWTCookie(req, t)
+
+	client := http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	defer res.Body.Close()
+	resBody, err := io.ReadAll(res.Body)
+
+	c.Redirect(http.StatusFound, successRedirectURL)
+
+	logger.Slog.Info("success OAuth2.0(OIDC)")
+
+	return resBody, nil
+}
+
 func oauth2SignUp(c echo.Context, n, e string) error {
 	_, u, err := models.CreateUser(n, e, "", "")
 	if err != nil {
 		return err
 	}
 	tokenString, err := GenerateJWT(u)
+	// レスポンス用
 	SetJWTCookie(c, tokenString)
 
-	logger.Slog.Info("success OAuth2.0(OIDC) SignUp")
-	c.Redirect(http.StatusFound, successRedirectURL)
-	return nil
+	resBody, err := afterSuccessedOAuth2(c, tokenString)
+	if err != nil {
+		return err
+	}
+
+	logger.Slog.Info("success: SignUp")
+	return c.JSON(http.StatusOK, resBody)
 }
 
 func oauth2Login(c echo.Context, e string) error {
@@ -82,9 +113,13 @@ func oauth2Login(c echo.Context, e string) error {
 	tokenString, err := GenerateJWT(u)
 	SetJWTCookie(c, tokenString)
 
-	logger.Slog.Info("success OAuth2.0(OIDC) Login")
-	c.Redirect(http.StatusFound, successRedirectURL)
-	return nil
+	resBody, err := afterSuccessedOAuth2(c, tokenString)
+	if err != nil {
+		return err
+	}
+
+	logger.Slog.Info("success: Login")
+	return c.JSON(http.StatusOK, resBody)
 }
 
 func newOAuth2Config(c echo.Context) (*oauth2.Config, error) {

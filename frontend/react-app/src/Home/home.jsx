@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import ErrorPage from "../components/error";
 
 const Home = () => {
-  const [data, setData] = useState("");
+  const [data, setData] = useState({
+    user_id: "",
+    username: "",
+    email: "",
+    projects: [],
+  });
   const [status, setStatus] = useState(0);
 
   useEffect(() => {
@@ -13,7 +18,13 @@ const Home = () => {
       });
       setStatus(response.status);
       const json = await response.json();
-      setData(json);
+      console.log("response json: ", json);
+      setData({
+        ...data,
+        user_id: json.user_id,
+        username: json.username,
+        email: json.email,
+      });
     };
     fetchData();
   }, []);

@@ -120,12 +120,13 @@ const LoginForm = (isLogin) => {
         body: formData,
       });
       const data = await response.json();
-      if (data.errorMsg !== "") {
+      if (data.Common.errorMsg !== "") {
         setError({
           ...error,
-          responseMsg: data.errorMsg,
+          responseMsg: data.Common.errorMsg,
         });
-        console.log("login failed: ", data.errorMsg, error);
+        console.log(data);
+        console.log("login failed: ", data.Common.errorMsg, error);
       } else {
         navFunc();
       }
