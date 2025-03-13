@@ -11,6 +11,7 @@ const passwordPattern =
   /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
 const loginPath = "/api/login";
 const signupPath = "/api/signup";
+const oauth2Path = "/api/auth/login";
 
 function emailValidation(
   event,
@@ -111,6 +112,11 @@ const LoginForm = (isLogin) => {
     navigate("/home");
   }
 
+  function handleOAuth2() {
+    console.log("OAuth2");
+    window.location.href = oauth2Path;
+  }
+
   async function fetchResultAuth(isLogin, navFunc) {
     let formData = new FormData(document.getElementById("form"));
     console.log("formData: ", formData);
@@ -145,6 +151,24 @@ const LoginForm = (isLogin) => {
           method="POST"
           className={"flex flex-col justify-center items-center gap-2"}
         >
+          <button
+            type="button"
+            className={
+              "flex justify-start items-center w-64 sm:w-72 md:w-80 lg:w-104 h-12 border-2 border-gray-300 outline-none rounded py-2 px-4"
+            }
+            onClick={handleOAuth2}
+          >
+            <img
+              src="/google_logo.png"
+              alt="google-logo"
+              width={"25px"}
+              height={"10px"}
+            />
+            <span className={"w-full pr-10"}>Googleで続ける</span>
+          </button>
+          <div className={"flex justify-center w-full py-4"}>
+            <hr className={"w-80 text-gray-300 border-1"} />
+          </div>
           {isLogin ? console.log("LoginForm") : NameInput()}
           <input
             className={

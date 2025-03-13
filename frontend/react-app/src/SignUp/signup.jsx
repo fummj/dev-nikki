@@ -4,7 +4,7 @@ import Base from "../Index/base.jsx";
 const SignUpElements = () => {
   return (
     <>
-      <div className="flex flex-col items-center gap-5">
+      <div className="flex flex-col justify-center items-center gap-5">
         <h2 className={"text-[32px] font-bold text-[#6C235B]"}>Sign Up</h2>
         <SignUpForm />
       </div>

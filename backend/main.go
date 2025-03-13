@@ -22,7 +22,7 @@ func main() {
 	app.POST("/api/signup", authHandler.SignUp)
 	app.GET("/api/home", homeHandler.Home)
 	app.GET("/api/pre-home", homeHandler.PreHome)
-	app.GET("/auth/login", authN.OAuth2)
+	app.GET("/api/auth/login", authN.OAuth2)
 	app.GET("/auth/callback", authN.OAuth2Callback)
 	app.GET("/*", wildCardHandler.FallbackToIndex)
 
