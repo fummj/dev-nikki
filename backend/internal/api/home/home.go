@@ -40,6 +40,39 @@ type preHomeResponseData struct {
 	Description string `json:"description"`
 }
 
+func Home(c echo.Context) error {
+	claims, err := authN.GetExtractedCustomClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, homeFailedResponse)
+	}
+
+	logger.Slog.Info("get claims from user request", "claims", claims)
+
+	u, err := models.GetExistUser(claims.Email)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, homeFailedResponse)
+	}
+
+	_, project, err := models.GetProject(u.ID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, homeFailedResponse)
+	}
+
+	resp := &response.HomeResponse{
+		Common: response.CommonResponse{
+			Status:   "success home",
+			UserID:   claims.UserID,
+			Username: claims.Username,
+			Email:    claims.Email,
+			ErrorMsg: "",
+		},
+		Phase:   phaseHome,
+		Project: project,
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
 func PreHome(c echo.Context) error {
 	claims, err := authN.GetExtractedCustomClaims(c)
 	if err != nil {
