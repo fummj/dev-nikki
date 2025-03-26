@@ -16,3 +16,7 @@ func (h HomeHandler) Home(c echo.Context) error {
 func (h HomeHandler) PreHome(c echo.Context) error {
 	return home.PreHome(c)
 }
+
+func (h HomeHandler) PostPreHome(c echo.Context) error {
+	return home.PostPreHome(c)
+}

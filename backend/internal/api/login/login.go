@@ -22,6 +22,7 @@ var (
 			Status:   "failed",
 			UserID:   0,
 			Username: "",
+			Email:    "",
 			ErrorMsg: loginError.Error(),
 		},
 	}
@@ -71,6 +72,7 @@ func Login(c echo.Context) error {
 			Status:   "success login",
 			UserID:   u.ID,
 			Username: u.Username,
+			Email:    u.Email,
 			ErrorMsg: "",
 		},
 	}

@@ -10,6 +10,7 @@ type CommonResponse struct {
 	Status   string `json:"status"`
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
+	Email    string `json:"email"`
 	ErrorMsg string `json:"errorMsg"`
 }
 
@@ -23,11 +24,30 @@ type SignUpResponse struct {
 
 type PreHomeResponse struct {
 	Common   CommonResponse
+	Phase    string           `json:"phase"`
 	Projects []models.Project `json:"projects"`
 }
 
 type HomeResponse struct {
 	Common         CommonResponse
-	SideBarFolders []string          `json:"sidebar_folders"`
-	SideBarFiles   map[string]string `json:"sidebar_files"`
+	Phase          string                   `json:"phase"`
+	Project        models.Project           `json:"project"`
+	ProjectFolders []models.Folder          `json:"project_folders"`
+	FilesPerFolder map[string][]models.File `json:"files_per_folder"`
+}
+
+func NewHomeResponse(id uint, s, n, e, errmsg, phase string, pr models.Project, folders []models.Folder, fpf map[string][]models.File) HomeResponse {
+	return HomeResponse{
+		Common: CommonResponse{
+			Status:   s,
+			UserID:   id,
+			Username: n,
+			Email:    e,
+			ErrorMsg: errmsg,
+		},
+		Phase:          phase,
+		Project:        pr,
+		ProjectFolders: folders,
+		FilesPerFolder: fpf,
+	}
 }

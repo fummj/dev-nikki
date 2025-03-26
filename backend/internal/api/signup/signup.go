@@ -31,6 +31,7 @@ var (
 			Status:   "failed",
 			UserID:   0,
 			Username: "",
+			Email:    "",
 			ErrorMsg: signupError.Error(),
 		},
 	}
@@ -135,6 +136,7 @@ func SignUp(c echo.Context) error {
 			Status:   "success signup",
 			UserID:   u.ID,
 			Username: u.Username,
+			Email:    u.Email,
 			ErrorMsg: "",
 		},
 	}

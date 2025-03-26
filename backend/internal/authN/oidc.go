@@ -20,8 +20,8 @@ import (
 const (
 	googleURL          = "https://accounts.google.com"
 	redirectURL        = "http://localhost:8080/auth/callback"
-	successRedirectURL = "http://localhost:8080/home"
-	successRequestURL  = "http://localhost:8080/api/pre-home"
+	successRedirectURL = "http://localhost:8080/prehome"
+	successRequestURL  = "http://localhost:8080/api/home/prehome"
 )
 
 var (
@@ -58,6 +58,7 @@ func generateState() string {
 	if err != nil {
 		panic(err)
 	}
+
 	state = base64.RawURLEncoding.EncodeToString(b)
 	return state
 }
@@ -82,7 +83,6 @@ func afterSuccessedOAuth2(c echo.Context, t string) ([]byte, error) {
 	c.Redirect(http.StatusFound, successRedirectURL)
 
 	logger.Slog.Info("success OAuth2.0(OIDC)")
-
 	return resBody, nil
 }
 
