@@ -6,6 +6,17 @@ a, button {
     cursor: pointer;
 }
 
+.no_scrollbar {
+    /*スクロールバー非表示（IE, Edge）*/
+    -ms-overflow-style: none;
+    /*スクロールバー非表示（Firefox）*/
+    scrollbar-width: none;
+}
+/*スクロールバー非表示（Chrome, Safari）*/
+.no_scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
 /*自動保管機能により提案された際の入力フィールドの背景色を白にする。*/
 input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 1000px white inset;

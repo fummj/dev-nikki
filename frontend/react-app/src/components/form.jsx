@@ -12,6 +12,7 @@ const passwordPattern =
 const loginPath = "/api/login";
 const signupPath = "/api/signup";
 const oauth2Path = "/api/auth/login";
+const prehomePath = "/prehome";
 
 function emailValidation(
   event,
@@ -107,9 +108,8 @@ const LoginForm = (isLogin) => {
   const [isRevealPassword, setIsRevealPassword] = useState(false);
 
   const navigate = useNavigate();
-  function handleHome() {
-    console.log("home page");
-    navigate("/home");
+  function handlePreHome() {
+    navigate(prehomePath);
   }
 
   function handleOAuth2() {
@@ -149,7 +149,7 @@ const LoginForm = (isLogin) => {
           id="form"
           action=""
           method="POST"
-          className={"flex flex-col justify-center items-center gap-2"}
+          className={"flex flex-col justify-center items-center gap-3"}
         >
           <button
             type="button"
@@ -166,8 +166,10 @@ const LoginForm = (isLogin) => {
             />
             <span className={"w-full pr-10"}>Googleで続ける</span>
           </button>
-          <div className={"flex justify-center w-full py-4"}>
-            <hr className={"w-80 text-gray-300 border-1"} />
+          <div
+            className={"flex justify-center w-64 sm:w-72 md:w-80 lg:w-104 py-4"}
+          >
+            <hr className={"w-full text-gray-300 border-b-0"} />
           </div>
           {isLogin ? console.log("LoginForm") : NameInput()}
           <input
@@ -214,7 +216,7 @@ const LoginForm = (isLogin) => {
             }
             type="button"
             value="送信"
-            onClick={() => fetchResultAuth(isLogin, handleHome)}
+            onClick={() => fetchResultAuth(isLogin, handlePreHome)}
           />
           <div className={"flex flex-col text-sm text-center text-rose-600"}>
             {/*全体のエラーメッセージを表示*/}
