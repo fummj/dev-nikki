@@ -7,35 +7,40 @@ import (
 )
 
 type User struct {
-	gorm.Model
+	ID       uint   `gorm:"primarykey;autoIncrement;not null"`
 	Username string `gorm:"type:varchar(30);not null"`
 	Email    string `gorm:"type:varchar(254);unique;not null"`
 	Password string `gorm:"type:varchar(100)"`
 	Salt     string `gorm:"type:varchar(16)"`
 	IsActive bool   `gorm:"default:false"`
+	gorm.Model
 }
 
 type Project struct {
-	gorm.Model
-	Name        string `gorm:"type:varchar(30)"`
+	ID          uint   `gorm:"primarykey;autoIncrement;not null"`
+	Name        string `gorm:"type:varchar(30);not null"`
 	Description string `gorm:"type:varchar(100)"`
-	UserID      uint
+	UserID      uint   `gorm:"not null"`
+	gorm.Model
 }
 
 type Folder struct {
+	ID             uint   `gorm:"primarykey;autoIncrement;not null"`
+	Name           string `gorm:"type:varchar(30);not null"`
+	UserID         uint   `gorm:"not null"`
+	ProjectID      uint   `gorm:"not null"`
+	ParentFolderID uint
 	gorm.Model
-	Name      string `gorm:"type:varchar(30)"`
-	UserID    uint
-	ProjectID uint
 }
 
 type File struct {
-	gorm.Model
-	Name      string  `gorm:"type:varchar(30)"`
+	ID        uint    `gorm:"primarykey;autoIncrement;not null"`
+	Name      string  `gorm:"type:varchar(30);not null"`
 	Content   *string `gorm:"type:text"`
-	UserID    uint
-	ProjectID uint
+	UserID    uint    `gorm:"not null"`
+	ProjectID uint    `gorm:"not null"`
 	FolderID  uint
+	gorm.Model
 }
 
 func IsExistTable(db *gorm.DB) bool {
