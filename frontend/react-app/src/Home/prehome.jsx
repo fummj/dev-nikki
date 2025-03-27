@@ -10,7 +10,6 @@ const PreHome = ({ projects }) => {
   const [inputValue, setInputValue] = useState("");
   const [userKeyDownCountState, setUserKeyDownCountState] = useState(-1);
   const suggestCount = useMemo(() => suggestState.length, [suggestState]);
-  const [error, setError] = useState("");
 
   const navigate = useNavigate();
   function handleHome(data) {
@@ -76,7 +75,6 @@ const PreHome = ({ projects }) => {
     userKeyDownCount,
     setUserKeyDownCount,
     setInputValue,
-    setError,
   ) {
     let suggest_wrap = document.querySelector("#suggest-wrap");
 
@@ -94,7 +92,6 @@ const PreHome = ({ projects }) => {
         const data = await response.json();
         if (data.Common.errorMsg === "") {
           console.log("prehome response: ", data);
-
           console.log("prehomeからhomeに飛ばす。");
           handleHome({
             user_id: data.Common.user_id,
@@ -107,7 +104,6 @@ const PreHome = ({ projects }) => {
             filesPerFolder: data.files_per_folder,
           });
         }
-        setError(data.Common.errMsg);
       };
       fetchData();
     }
@@ -230,7 +226,6 @@ const PreHome = ({ projects }) => {
                   userKeyDownCountState,
                   setUserKeyDownCountState,
                   setInputValue,
-                  setError,
                 )
               }
             />
@@ -261,10 +256,6 @@ const PreHome = ({ projects }) => {
             {suggestList}
           </div>
         </form>
-
-        <div className={"flex flex-col text-sm text-center text-rose-600"}>
-          {error}
-        </div>
       </div>
     </>
   );

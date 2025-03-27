@@ -123,7 +123,7 @@ func getMatchProject(p []models.Project, name string) (*models.Project, error) {
 		}
 	}
 
-	logger.Slog.Error("not exist project_name", "project_name", name)
+	logger.Slog.Info("not exist project_name", "project_name", name)
 	return &models.Project{}, notMatchProjectError
 }
 
@@ -160,19 +160,11 @@ func getProject(c echo.Context, u models.User, p []models.Project) (*models.Proj
 }
 
 // project_nameに紐づくfolderを全て取得する。なければjson responseを返す。
-func getFolders(c echo.Context, u models.User, p models.Project) ([]models.Folder, error) {
+func getFolders(u models.User, p models.Project) ([]models.Folder, error) {
 	_, folders, err := models.GetFolders(u.ID, p.ID)
 	if err != nil {
 		logger.Slog.Error(err.Error())
-		return []models.Folder{}, c.JSON(http.StatusNotFound, homeFailedResponse)
-	}
-
-	if len(folders) == 0 {
-
-		resp := response.NewHomeResponse(u.ID, "success home", u.Username, u.Email, "", phaseHome, p, []models.Folder{}, map[string][]models.File{})
-
-		logger.Slog.Info("access to home with new project", "resonse", resp)
-		return []models.Folder{}, c.JSON(http.StatusOK, resp)
+		return []models.Folder{}, err
 	}
 
 	return folders, nil
@@ -235,9 +227,9 @@ func PostPreHome(c echo.Context) error {
 	}
 
 	// project_nameに紐づいているfolder, fileを全て取得して返す
-	folders, jsonResp := getFolders(c, *u, *project)
-	if jsonResp != nil {
-		return jsonResp
+	folders, err := getFolders(*u, *project)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, homeFailedResponse)
 	}
 
 	fpf, err := getFilesPerFolder(*u, *project, folders)
@@ -247,6 +239,6 @@ func PostPreHome(c echo.Context) error {
 
 	resp := response.NewHomeResponse(u.ID, "success home", u.Username, u.Email, "", phaseHome, *project, folders, fpf)
 
-	logger.Slog.Info("access to home with already exist project", "resonse", resp)
+	logger.Slog.Info("access to home with already exist project", "response", resp)
 	return c.JSON(http.StatusOK, resp)
 }
