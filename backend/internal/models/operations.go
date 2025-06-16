@@ -150,9 +150,9 @@ func GetFolders(userID uint, projectID uint) (*gorm.DB, []Folder, error) {
 }
 
 // ファイル取得。
-func GetFiles(userID, projectID, folderID uint) (*gorm.DB, []File, error) {
+func GetFiles(userID, projectID, folderID uint) ([]File, error) {
 	var files []File
-	result := DBC.DB.Where(&File{UserID: userID, ProjectID: projectID, FolderID: folderID},
+	result := DBC.DB.Where(&File{UserID: userID, ProjectID: projectID, FolderID: &folderID},
 		"user_id",
 		"project_id",
 		"folder_id",
@@ -160,7 +160,115 @@ func GetFiles(userID, projectID, folderID uint) (*gorm.DB, []File, error) {
 
 	if result.Error != nil {
 		logger.Slog.Error("failed to get files from user's project's folder", "error", result.Error.Error())
-		return result, files, failedGetFilesError
+		return files, failedGetFilesError
 	}
-	return result, files, nil
+
+	return files, nil
+}
+
+// フォルダに関連していないファイル取得。
+func GetNoFolderFiles(userID, projectID uint) ([]File, error) {
+	var files []File
+
+	result := DBC.DB.Where(
+		&File{UserID: userID, ProjectID: projectID, FolderID: nil},
+		"user_id",
+		"project_id",
+		"folder_id",
+	).Find(&files)
+
+	if result.Error != nil {
+		logger.Slog.Error(result.Error.Error())
+		return files, result.Error
+	}
+
+	return files, nil
+}
+
+// 一つのファイルを取得。
+func GetFile(fileID uint) (File, error) {
+	var file File
+	result := DBC.DB.First(&file, fileID)
+
+	if result.Error != nil {
+		logger.Slog.Error("", "error", result.Error.Error())
+		return file, result.Error
+	}
+
+	return file, nil
+}
+
+// ファイルのContentを更新。
+func UpdateFile(fileID uint, content string) error {
+	result := DBC.DB.Model(&File{ID: fileID}).Update("content", content)
+	if result.Error != nil {
+		logger.Slog.Error("failed to update file content", "error", result.Error.Error())
+		return result.Error
+	}
+	return nil
+}
+
+// フォルダ作成
+func CreateFolder(n string, ui, pi uint, pfi *uint) (Folder, error) {
+	fo := Folder{
+		Name:           n,
+		UserID:         ui,
+		ProjectID:      pi,
+		ParentFolderID: pfi,
+	}
+
+	result := DBC.DB.Create(&fo)
+	if result.Error != nil {
+		logger.Slog.Error(result.Error.Error())
+		return fo, result.Error
+	}
+
+	return fo, nil
+}
+
+// ファイル作成
+func CreateFile(n string, ui, pi uint, fi *uint) (File, error) {
+	f := File{
+		Name:      n,
+		UserID:    ui,
+		ProjectID: pi,
+		FolderID:  fi,
+	}
+
+	result := DBC.DB.Create(&f)
+	if result.Error != nil {
+		logger.Slog.Error(result.Error.Error())
+		return f, result.Error
+	}
+
+	return f, nil
+}
+
+// フォルダ削除
+func DeleteFolder(foi uint) error {
+	fo := Folder{
+		ID: foi,
+	}
+
+	result := DBC.DB.Delete(&fo)
+	if result.Error != nil {
+		logger.Slog.Error(result.Error.Error())
+		return result.Error
+	}
+	return nil
+}
+
+// ファイル削除
+func DeleteFile(fi uint) error {
+	f := File{
+		ID: fi,
+	}
+
+	result := DBC.DB.Delete(&f)
+	if result.Error != nil {
+		logger.Slog.Error(result.Error.Error())
+		return result.Error
+	}
+
+	return nil
 }

@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	emailValidationError    error = errors.New("this email is invalid")
-	passwordValidationError error = errors.New("this password is invalid")
+	emailValidationError         error = errors.New("this email is invalid")
+	passwordValidationError      error = errors.New("this password is invalid")
+	verifyJWTAgainstRequestError error = errors.New("some of the information in claims differs from some of the information requested")
 )
 
 const (
@@ -70,6 +71,17 @@ func Validation(e string, p string) error {
 	if err := PasswordValidation(p); err != nil {
 		fmt.Println(err)
 		return err
+	}
+
+	return nil
+}
+
+// cid(claimsのuser_id), rbid(リクエストボディから取得したuser_id)が一致するかのチェック
+func VerifyJWTAgainstRequest(cid, rbid uint) error {
+
+	if cid != rbid {
+		logger.Slog.Error("access is denied because claims information does not match the request-user information", "claims-userid", cid, "request-userid", rbid)
+		return verifyJWTAgainstRequestError
 	}
 
 	return nil

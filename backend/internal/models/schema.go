@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	ID       uint   `gorm:"primarykey;autoIncrement;not null"`
+	ID       uint   `gorm:"primarykey;autoIncrement;not null" json:"use_id"`
 	Username string `gorm:"type:varchar(30);not null"`
 	Email    string `gorm:"type:varchar(254);unique;not null"`
 	Password string `gorm:"type:varchar(100)"`
@@ -25,21 +25,21 @@ type Project struct {
 }
 
 type Folder struct {
-	ID             uint   `gorm:"primarykey;autoIncrement;not null"`
-	Name           string `gorm:"type:varchar(30);not null"`
-	UserID         uint   `gorm:"not null"`
-	ProjectID      uint   `gorm:"not null"`
-	ParentFolderID uint
+	ID             uint   `gorm:"primarykey;autoIncrement;not null" json:"folder_id"`
+	Name           string `gorm:"type:varchar(30);not null" json:"folder_name"`
+	UserID         uint   `gorm:"not null" json:"user_id"`
+	ProjectID      uint   `gorm:"not null" json:"project_id"`
+	ParentFolderID *uint  `json:"parent_id"`
 	gorm.Model
 }
 
 type File struct {
-	ID        uint    `gorm:"primarykey;autoIncrement;not null"`
-	Name      string  `gorm:"type:varchar(30);not null"`
-	Content   *string `gorm:"type:text"`
-	UserID    uint    `gorm:"not null"`
-	ProjectID uint    `gorm:"not null"`
-	FolderID  uint
+	ID        uint   `gorm:"primarykey;autoIncrement;not null" json:"file_id"`
+	Name      string `gorm:"type:varchar(30);not null" json:"filename"`
+	Content   string `gorm:"type:text" json:"content"`
+	UserID    uint   `gorm:"not null" json:"user_id"`
+	ProjectID uint   `gorm:"not null" json:"project_id"`
+	FolderID  *uint  `json:"folder_id"`
 	gorm.Model
 }
 

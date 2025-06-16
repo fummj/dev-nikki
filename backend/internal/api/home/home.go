@@ -20,14 +20,40 @@ var (
 	notExistUserError    = errors.New("このアカウントは存在していません。")
 	notMatchProjectError = errors.New("このプロジェクトは存在していません。")
 	internalServerError  = errors.New("Internal Server Error")
+	hasExpiredJWTError   = errors.New("認証情報の期限が切れています。")
 
-	homeFailedResponse = response.HomeResponse{
+	unAuthorizedErrorResponse = response.HomeResponse{
 		Common: response.CommonResponse{
 			Status:   "failed",
-			UserID:   0,
-			Username: "",
-			Email:    "",
-			ErrorMsg: internalServerError.Error(),
+			ErrorMsg: unAuthorizedError.Error(),
+		},
+	}
+
+	notExistUserErrorResponse = response.HomeResponse{
+		Common: response.CommonResponse{
+			Status:   "failed",
+			ErrorMsg: notExistUserError.Error(),
+		},
+	}
+
+	notMathProjectErrorResponse = response.HomeResponse{
+		Common: response.CommonResponse{
+			Status:   "failed",
+			ErrorMsg: notMatchProjectError.Error(),
+		},
+	}
+
+	insernalServerErrorResponse = response.HomeResponse{
+		Common: response.CommonResponse{
+			Status:   "failed",
+			ErrorMsg: notMatchProjectError.Error(),
+		},
+	}
+
+	hasExpiredJWTErrorResponse = response.HomeResponse{
+		Common: response.CommonResponse{
+			Status:   "failed",
+			ErrorMsg: hasExpiredJWTError.Error(),
 		},
 	}
 
@@ -43,19 +69,29 @@ type preHomeResponseData struct {
 func Home(c echo.Context) error {
 	claims, err := authN.GetExtractedCustomClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, homeFailedResponse)
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
 	}
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
 
 	u, err := models.GetExistUser(claims.Email)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, homeFailedResponse)
+		return c.JSON(http.StatusNotFound, notExistUserErrorResponse)
 	}
 
 	_, project, err := models.GetProject(u.ID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, homeFailedResponse)
+		return c.JSON(http.StatusInternalServerError, notMathProjectErrorResponse)
+	}
+
+	fs, err := getFolders(u.ID, project.ID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	fpf, err := getFilesPerFolder(u.ID, project.ID, fs)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
 
 	resp := &response.HomeResponse{
@@ -66,8 +102,10 @@ func Home(c echo.Context) error {
 			Email:    claims.Email,
 			ErrorMsg: "",
 		},
-		Phase:   phaseHome,
-		Project: project,
+		Phase:          phaseHome,
+		Project:        project,
+		ProjectFolders: fs,
+		FilesPerFolder: fpf,
 	}
 
 	return c.JSON(http.StatusOK, resp)
@@ -76,20 +114,20 @@ func Home(c echo.Context) error {
 func PreHome(c echo.Context) error {
 	claims, err := authN.GetExtractedCustomClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, homeFailedResponse)
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
 	}
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
 
 	u, err := models.GetExistUser(claims.Email)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, homeFailedResponse)
+		return c.JSON(http.StatusNotFound, notMathProjectErrorResponse)
 	}
 
 	// models.GetProjectsでUserIDに紐づいたProjectを全て取得し、frontにかえす。
 	_, projects, err := models.GetProjects(u.ID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, homeFailedResponse)
+		return c.JSON(http.StatusInternalServerError, notMathProjectErrorResponse)
 	}
 
 	resp := &response.PreHomeResponse{
@@ -160,8 +198,8 @@ func getProject(c echo.Context, u models.User, p []models.Project) (*models.Proj
 }
 
 // project_nameに紐づくfolderを全て取得する。なければjson responseを返す。
-func getFolders(u models.User, p models.Project) ([]models.Folder, error) {
-	_, folders, err := models.GetFolders(u.ID, p.ID)
+func getFolders(u uint, p uint) ([]models.Folder, error) {
+	_, folders, err := models.GetFolders(u, p)
 	if err != nil {
 		logger.Slog.Error(err.Error())
 		return []models.Folder{}, err
@@ -170,11 +208,11 @@ func getFolders(u models.User, p models.Project) ([]models.Folder, error) {
 	return folders, nil
 }
 
-func getFilesPerFolder(u models.User, p models.Project, folders []models.Folder) (map[string][]models.File, error) {
+func getFilesPerFolder(u uint, p uint, folders []models.Folder) (map[string][]models.File, error) {
 	fpf := map[string][]models.File{}
 
 	for _, f := range folders {
-		_, files, err := models.GetFiles(u.ID, p.ID, f.ID)
+		files, err := models.GetFiles(u, p, f.ID)
 		if err != nil {
 			logger.Slog.Error(err.Error())
 			return fpf, err
@@ -185,6 +223,17 @@ func getFilesPerFolder(u models.User, p models.Project, folders []models.Folder)
 		}
 	}
 
+	// folder_idがnullのfileを取得。
+	nff, err := models.GetNoFolderFiles(u, p)
+	if err != nil {
+		logger.Slog.Error(err.Error())
+		return fpf, err
+	}
+
+	if len(nff) != 0 {
+		fpf["null"] = nff
+	}
+
 	return fpf, nil
 }
 
@@ -192,29 +241,28 @@ func getFilesPerFolder(u models.User, p models.Project, folders []models.Folder)
 func PostPreHome(c echo.Context) error {
 	claims, err := authN.GetExtractedCustomClaims(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, homeFailedResponse)
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
 	}
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
 
 	u, err := models.GetExistUser(claims.Email)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, homeFailedResponse)
+		return c.JSON(http.StatusNotFound, notExistUserErrorResponse)
 	}
 
 	_, projects, err := models.GetProjects(u.ID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, homeFailedResponse)
+		return c.JSON(http.StatusInternalServerError, notMathProjectErrorResponse)
 	}
 
 	project, isNew, err := getProject(c, *u, projects)
 	if err != nil {
 		if errors.Is(err, models.AlreadyExistProjectError) {
-			homeFailedResponse.Common.ErrorMsg = err.Error()
-			return c.JSON(http.StatusNotFound, homeFailedResponse)
+			return c.JSON(http.StatusNotFound, notMathProjectErrorResponse)
 		}
 
-		return c.JSON(http.StatusNotFound, homeFailedResponse)
+		return c.JSON(http.StatusNotFound, notMathProjectErrorResponse)
 	}
 
 	// isNewがtrueだったらfolder, fileを探す必要ないのでユーザーに返す。
@@ -227,18 +275,208 @@ func PostPreHome(c echo.Context) error {
 	}
 
 	// project_nameに紐づいているfolder, fileを全て取得して返す
-	folders, err := getFolders(*u, *project)
+	folders, err := getFolders(u.ID, project.ID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, homeFailedResponse)
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
 
-	fpf, err := getFilesPerFolder(*u, *project, folders)
+	fpf, err := getFilesPerFolder(u.ID, project.ID, folders)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, homeFailedResponse)
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
 
 	resp := response.NewHomeResponse(u.ID, "success home", u.Username, u.Email, "", phaseHome, *project, folders, fpf)
+	return c.JSON(http.StatusOK, resp)
+}
 
-	logger.Slog.Info("access to home with already exist project", "response", resp)
+func UpdateMarkdown(c echo.Context) error {
+	// 送ってきたユーザーのUserID, projectID, FolderID, FileIDが一致するデータのFile.Contentをupdateする。
+	claims, err := authN.GetExtractedCustomClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
+	}
+
+	f := new(models.File)
+	if err = c.Bind(f); err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusUnauthorized, unAuthorizedErrorResponse)
+	}
+	logger.Slog.Info(fmt.Sprintf("%+v request-body\n", f))
+
+	if err := authN.VerifyJWTAgainstRequest(claims.UserID, f.UserID); err != nil {
+		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
+	}
+
+	err = models.UpdateFile(f.ID, f.Content)
+	if err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	// updateしたfileを取得。
+	file, err := models.GetFile(f.ID)
+	if err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	folders, err := getFolders(file.UserID, file.ProjectID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	fpf, err := getFilesPerFolder(file.UserID, file.ProjectID, folders)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+	resp := response.FileUpdateResponse{File: file, FilesPerFolder: fpf}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func CreateNewFolder(c echo.Context) error {
+	claims, err := authN.GetExtractedCustomClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
+	}
+
+	fo := new(models.Folder)
+	if err = c.Bind(fo); err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusUnauthorized, unAuthorizedErrorResponse)
+	}
+	logger.Slog.Info(fmt.Sprintf("%+v request-body\n", fo))
+
+	if err := authN.VerifyJWTAgainstRequest(claims.UserID, fo.UserID); err != nil {
+		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
+	}
+
+	f, err := models.CreateFolder(fo.Name, fo.UserID, fo.ProjectID, fo.ParentFolderID)
+	if err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+	logger.Slog.Info("folder create success", "folder", f)
+
+	fs, err := getFolders(f.UserID, f.ProjectID)
+	if err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	fpf, err := getFilesPerFolder(f.UserID, f.ProjectID, fs)
+
+	resp := response.CreateFolderResponse{ProjectFolders: fs, FilesPerFolder: fpf}
+	return c.JSON(http.StatusOK, resp)
+}
+
+func CreateNewFile(c echo.Context) error {
+	claims, err := authN.GetExtractedCustomClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
+	}
+
+	f := new(models.File)
+	if err = c.Bind(f); err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusUnauthorized, unAuthorizedErrorResponse)
+	}
+	logger.Slog.Info(fmt.Sprintf("%+v request-body\n", f))
+
+	if err := authN.VerifyJWTAgainstRequest(claims.UserID, f.UserID); err != nil {
+		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
+	}
+
+	file, err := models.CreateFile(f.Name, f.UserID, f.ProjectID, f.FolderID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+	logger.Slog.Info("file create success", "file", f)
+
+	fs, err := getFolders(file.UserID, file.ProjectID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	fpf, err := getFilesPerFolder(file.UserID, file.ProjectID, fs)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	resp := response.CreateFileResponse{File: file, ProjectFolders: fs, FilesPerFolder: fpf}
+	return c.JSON(http.StatusOK, resp)
+}
+
+func DeleteFolder(c echo.Context) error {
+	claims, err := authN.GetExtractedCustomClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
+	}
+
+	fo := new(models.Folder)
+	if err = c.Bind(fo); err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusUnauthorized, unAuthorizedErrorResponse)
+	}
+	logger.Slog.Info(fmt.Sprintf("%+v request-body\n", fo))
+
+	if err := authN.VerifyJWTAgainstRequest(claims.UserID, fo.UserID); err != nil {
+		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
+	}
+
+	err = models.DeleteFolder(fo.ID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+	logger.Slog.Info("folder delete success", "folder", fo)
+
+	fs, err := getFolders(fo.UserID, fo.ProjectID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	fpf, err := getFilesPerFolder(fo.UserID, fo.ProjectID, fs)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	resp := response.DeleteFolderResponse{ProjectFolders: fs, FilesPerFolder: fpf}
+	return c.JSON(http.StatusOK, resp)
+}
+
+func DeleteFile(c echo.Context) error {
+	claims, err := authN.GetExtractedCustomClaims(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, hasExpiredJWTErrorResponse)
+	}
+
+	f := new(models.File)
+	if err = c.Bind(f); err != nil {
+		logger.Slog.Error(err.Error())
+		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
+	}
+	logger.Slog.Info(fmt.Sprintf("%+v request-body\n", f))
+
+	if err := authN.VerifyJWTAgainstRequest(claims.UserID, f.UserID); err != nil {
+		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
+	}
+
+	err = models.DeleteFile(f.ID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+	logger.Slog.Info("file delete success", "file", f)
+
+	fs, err := getFolders(f.UserID, f.ProjectID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	fpf, err := getFilesPerFolder(f.UserID, f.ProjectID, fs)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
+	}
+
+	resp := response.DeleteFileResponse{File: *f, ProjectFolders: fs, FilesPerFolder: fpf}
 	return c.JSON(http.StatusOK, resp)
 }
