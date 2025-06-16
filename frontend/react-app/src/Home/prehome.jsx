@@ -12,9 +12,8 @@ const PreHome = ({ projects }) => {
   const suggestCount = useMemo(() => suggestState.length, [suggestState]);
 
   const navigate = useNavigate();
-  function handleHome(data) {
-    // console.log("/homeに渡す直前のuserData(stateではなくデータ直入れ): ", data);
-    navigate("/home", { state: { userData: data } });
+  function handleHome() {
+    navigate("/home");
   }
 
   const suggestList = suggestState.map((suggestion, index) => {
@@ -80,7 +79,7 @@ const PreHome = ({ projects }) => {
 
     if (e.key === "Enter") {
       e.preventDefault();
-      console.log("project_name: ", inputValue);
+      // console.log("project_name: ", inputValue);
 
       const fetchData = async () => {
         const response = await fetch(prehomePath, {
@@ -91,18 +90,9 @@ const PreHome = ({ projects }) => {
         });
         const data = await response.json();
         if (data.Common.errorMsg === "") {
-          console.log("prehome response: ", data);
-          console.log("prehomeからhomeに飛ばす。");
-          handleHome({
-            user_id: data.Common.user_id,
-            username: data.Common.username,
-            email: data.Common.email,
-            errMsg: data.Common.errMsg,
-            phase: data.phase,
-            project: data.project,
-            projectFolders: data.project_folders,
-            filesPerFolder: data.files_per_folder,
-          });
+          // console.log("prehome response: ", data);
+          // console.log("prehomeからhomeに遷移。");
+          handleHome();
         }
       };
       fetchData();
@@ -200,7 +190,7 @@ const PreHome = ({ projects }) => {
       <div className={"w-112 m-auto"}>
         <form
           className={
-            "sm:w-96 md:w-104 lg:w-112 h-92 overflow-y-auto no_scrollbar border-7 border-[#6C235B] outline-none rounded-3xl"
+            "sm:w-96 md:w-104 lg:w-112 h-92 overflow-y-auto no_scrollbar border-7 border-[#6C235B] outline-none rounded-3xl font-extralight"
           }
           id="form"
           action={prehomePath}
@@ -250,7 +240,7 @@ const PreHome = ({ projects }) => {
           </div>
           <hr className={"mx-auto w-11/12 text-gray-200 border-b-1"} />
           <div
-            className={"flex flex-col align-center  gap-1 mt-3"}
+            className={"flex flex-col mt-3 align-center gap-1 "}
             id={"suggest-wrap"}
           >
             {suggestList}
