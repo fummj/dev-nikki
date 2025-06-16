@@ -40,10 +40,3 @@ services:
       - TZ=${TZ}
     tty: true
 
-  vk:
-    image: valkey/valkey:8.0.1-bookworm
-    ports:
-      - "6379:6379"
-    environment:
-      - TZ=${TZ}
-    tty: true
