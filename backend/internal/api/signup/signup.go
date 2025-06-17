@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	signupError = errors.New("すでにこのメールアドレスは存在しています。")
+	signupError = errors.New("サインアップに失敗しました。")
 
 	signupFailedResponse = response.SignUpResponse{
 		Common: response.CommonResponse{

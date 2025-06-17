@@ -14,87 +14,6 @@ const signupPath = "/api/signup";
 const oauth2Path = "/api/auth/login";
 const prehomePath = "/prehome";
 
-function emailValidation(
-  event,
-  state,
-  setEmailStateFunc,
-  errorState,
-  setErrorStateFunc,
-) {
-  setEmailStateFunc({ ...state, email: event.target.value });
-  if (emailPattern.test(event.target.value)) {
-    console.log("valid email");
-    setErrorStateFunc({ ...errorState, email: "" });
-  } else {
-    console.log("invalid email");
-    setErrorStateFunc({ ...errorState, email: "※無効なメールアドレスです。" });
-  }
-}
-
-function passwordValidation(
-  event,
-  state,
-  setPasswordStateFunc,
-  errorState,
-  setErrorStateFunc,
-) {
-  setPasswordStateFunc({ ...state, password: event.target.value });
-  if (passwordPattern.test(event.target.value)) {
-    console.log("valid password");
-    setErrorStateFunc({ ...errorState, password: "" });
-  } else {
-    console.log("invalid password");
-    setErrorStateFunc({
-      ...errorState,
-      password:
-        "※パスワードは8文字以上で、「大文字」「小文字」「数字」「記号」をそれぞれ1つ以上含めてください。",
-    });
-  }
-}
-
-const togglePassword = (isRevealState, setIsRevealStateFunc) => {
-  setIsRevealStateFunc((isRevealState) => !isRevealState);
-};
-
-const displayErrorMsg = (errorState) => {
-  if (errorState.email !== "" && errorState.password !== "") {
-    return (
-      <>
-        <span className={"flex flex-col"}>
-          {errorState.email}
-          <br />
-          {errorState.password}
-        </span>
-      </>
-    );
-  } else if (errorState.responseMsg !== "") {
-    return <span>{errorState.responseMsg}</span>;
-  } else {
-    return (
-      <span>
-        {errorState.email}
-        {errorState.password}
-        {errorState.responseMsg}
-      </span>
-    );
-  }
-};
-
-const NameInput = () => {
-  return (
-    <input
-      className={
-        "w-64 sm:w-72 md:w-80 lg:w-104 h-12 border-4 border-[#6C235B] outline-none rounded py-2 px-4"
-      }
-      type="text"
-      name="name"
-      id="name"
-      placeholder="名前"
-      required
-    />
-  );
-};
-
 const LoginForm = (isLogin) => {
   const [formData, setFormData] = useState({
     email: "",
@@ -116,6 +35,39 @@ const LoginForm = (isLogin) => {
     console.log("OAuth2");
     window.location.href = oauth2Path;
   }
+
+  function emailValidation(event) {
+    setFormData({ ...formData, email: event.target.value });
+    if (emailPattern.test(event.target.value)) {
+      console.log("valid email");
+      setError({ ...error, email: "" });
+    } else {
+      console.log("invalid email");
+      setError({
+        ...error,
+        email: "※無効なメールアドレスです。",
+      });
+    }
+  }
+
+  function passwordValidation(event) {
+    setFormData({ ...formData, password: event.target.value });
+    if (passwordPattern.test(event.target.value)) {
+      console.log("valid password");
+      setError({ ...error, password: "" });
+    } else {
+      console.log("invalid password");
+      setError({
+        ...error,
+        password:
+          "※パスワードは8文字以上で、「大文字」「小文字」「数字」「記号」をそれぞれ1つ以上含めてください。",
+      });
+    }
+  }
+
+  const togglePassword = () => {
+    setIsRevealPassword((isRevealPassword) => !isRevealPassword);
+  };
 
   async function fetchResultAuth(isLogin, navFunc) {
     let formData = new FormData(document.getElementById("form"));
@@ -141,6 +93,53 @@ const LoginForm = (isLogin) => {
       console.log("Error fetch data: ", error);
     }
   }
+
+  const NameInput = () => {
+    return (
+      <input
+        className={
+          "w-64 sm:w-72 md:w-80 lg:w-104 h-12 border-4 border-[#6C235B] outline-none rounded py-2 px-4"
+        }
+        type="text"
+        name="name"
+        id="name"
+        placeholder="名前"
+        required
+      />
+    );
+  };
+
+  const displayErrorMsg = () => {
+    if (error.email !== "" && error.password !== "") {
+      return (
+        <>
+          <span className={"flex flex-col"}>
+            {error.email}
+            <br />
+            {error.password}
+          </span>
+        </>
+      );
+    } else if (error.responseMsg !== "") {
+      return (
+        <div>
+          <span className={"block"}>{error.responseMsg}</span>
+          <span>
+            {error.email}
+            {error.password}
+          </span>
+        </div>
+      );
+    } else {
+      return (
+        <span>
+          {error.email}
+          {error.password}
+          {error.responseMsg}
+        </span>
+      );
+    }
+  };
 
   return (
     <>
@@ -182,7 +181,7 @@ const LoginForm = (isLogin) => {
             placeholder="メールアドレス"
             required
             onChange={(e) => {
-              emailValidation(e, formData, setFormData, error, setError);
+              emailValidation(e);
             }}
           />
           <div
@@ -198,7 +197,7 @@ const LoginForm = (isLogin) => {
               placeholder="パスワード"
               required
               onChange={(e) => {
-                passwordValidation(e, formData, setFormData, error, setError);
+                passwordValidation(e);
               }}
             />
             <span
@@ -212,11 +211,17 @@ const LoginForm = (isLogin) => {
           </div>
           <input
             className={
-              "w-64 sm:w-72 md:w-80 lg:w-104 h-12   bg-[#6C235B] hover:border[#994a7b] hover:bg-[#994a7b] rounded text-white text-center"
+              "w-64 sm:w-72 md:w-80 lg:w-104 h-12 bg-[#6C235B] hover:border[#994a7b] hover:bg-[#994a7b] disabled:opacity-70 disabled:cursor-not-allowed rounded text-white text-center"
             }
             type="button"
             value="送信"
-            onClick={() => fetchResultAuth(isLogin, handlePreHome)}
+            disabled={error.email !== "" || error.password !== ""}
+            onClick={() => {
+              if (error.email === "" && error.password === "") {
+                fetchResultAuth(isLogin, handlePreHome);
+              }
+              console.log(error);
+            }}
           />
           <div className={"flex flex-col text-sm text-center text-rose-600"}>
             {/*全体のエラーメッセージを表示*/}
