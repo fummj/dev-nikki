@@ -31,7 +31,7 @@ var (
 	failedExtractIDTokenError       = errors.New("failed to extract id_token")
 	failedVerifierIDTokenError      = errors.New("failed to verifier id_token")
 
-	envPath     = "."
+	envPath     = ".env"
 	credentials = map[string]string{
 		"CLIENT_ID":     "",
 		"CLIENT_SECRET": "",

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	EnvPath = "."
+	EnvPath = ".env"
 )
 
 var (

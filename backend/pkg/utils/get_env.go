@@ -10,8 +10,12 @@ var envMap map[string]string = make(map[string]string, 0)
 
 // 環境変数入りのmapを取得。引数pは隠しファイルのpath
 func GetEnv(p string) map[string]string {
-	godotenv.Load(p)
-	envMap, err := godotenv.Read()
+	err := godotenv.Load(p)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	envMap, err := godotenv.Read(p)
 	if err != nil {
 		log.Fatal(err)
 	}
