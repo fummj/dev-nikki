@@ -43,6 +43,7 @@ func (c *DBConnector) CreateDSN(s []any) {
 			s[i] = m[v]
 		} else {
 			logger.Slog.Error("Failed: dsnElmyArray elements contain not string")
+			return
 		}
 	}
 	c.DSN = fmt.Sprintf(dsn, s...)
@@ -53,6 +54,7 @@ func (c *DBConnector) ConnectDB() {
 	db, err := gorm.Open(postgres.Open(c.DSN), &gorm.Config{})
 	if err != nil {
 		logger.Slog.Error("Failed: " + err.Error())
+		return
 	}
 	c.DB = db
 }
