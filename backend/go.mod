@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.13.1
