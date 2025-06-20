@@ -16,17 +16,10 @@ var (
 	failedGetFoldersError    = errors.New("failed to get folders")
 	failedGetFilesError      = errors.New("failed to get files")
 	AlreadyExistProjectError = errors.New("プロジェクト名が重複しています。")
-
-	emailCount int64
 )
 
 // 同じemailが存在しないかをチェック。emailが存在していたらerrorを返す。e=email
 func IsEmailExist(tx *gorm.DB, e string) error {
-	tx.Table("users").Count(&emailCount)
-	if 0 == emailCount {
-		return nil
-	}
-
 	var user User
 	result := tx.Find(&user, "email = ?", e)
 	if 0 == result.RowsAffected {
