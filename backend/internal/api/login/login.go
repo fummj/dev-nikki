@@ -49,7 +49,7 @@ func Login(c echo.Context) error {
 	email := c.Request().FormValue("email")
 	password := c.Request().FormValue("password")
 
-	u, err := models.GetExistUser(email)
+	u, err := models.GetExistUser(models.DBC.DB, email)
 	if err != nil {
 		// front側に具体的なエラー内容は流さないようにloginFailedResponseを使用。
 		return c.JSON(http.StatusUnauthorized, loginFailedResponse)

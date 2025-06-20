@@ -74,12 +74,12 @@ func Home(c echo.Context) error {
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
 
-	u, err := models.GetExistUser(claims.Email)
+	u, err := models.GetExistUser(models.DBC.DB, claims.Email)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, notExistUserErrorResponse)
 	}
 
-	_, project, err := models.GetProject(u.ID)
+	_, project, err := models.GetProject(models.DBC.DB, u.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, notMathProjectErrorResponse)
 	}
@@ -119,13 +119,13 @@ func PreHome(c echo.Context) error {
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
 
-	u, err := models.GetExistUser(claims.Email)
+	u, err := models.GetExistUser(models.DBC.DB, claims.Email)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, notMathProjectErrorResponse)
 	}
 
 	// models.GetProjectsでUserIDに紐づいたProjectを全て取得し、frontにかえす。
-	_, projects, err := models.GetProjects(u.ID)
+	_, projects, err := models.GetProjects(models.DBC.DB, u.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, notMathProjectErrorResponse)
 	}
@@ -184,7 +184,7 @@ func getProject(c echo.Context, u models.User, p []models.Project) (*models.Proj
 
 	project, err := getMatchProject(p, data.ProjectName)
 	if err != nil {
-		_, project, err := models.CreateProject(data.ProjectName, data.Description, u.ID)
+		_, project, err := models.CreateProject(models.DBC.DB, data.ProjectName, data.Description, u.ID)
 		if err != nil {
 			logger.Slog.Error(err.Error())
 			return &models.Project{}, isNew, err
@@ -199,7 +199,7 @@ func getProject(c echo.Context, u models.User, p []models.Project) (*models.Proj
 
 // project_nameに紐づくfolderを全て取得する。なければjson responseを返す。
 func getFolders(u uint, p uint) ([]models.Folder, error) {
-	_, folders, err := models.GetFolders(u, p)
+	_, folders, err := models.GetFolders(models.DBC.DB, u, p)
 	if err != nil {
 		logger.Slog.Error(err.Error())
 		return []models.Folder{}, err
@@ -212,7 +212,7 @@ func getFilesPerFolder(u uint, p uint, folders []models.Folder) (map[string][]mo
 	fpf := map[string][]models.File{}
 
 	for _, f := range folders {
-		files, err := models.GetFiles(u, p, f.ID)
+		files, err := models.GetFiles(models.DBC.DB, u, p, f.ID)
 		if err != nil {
 			logger.Slog.Error(err.Error())
 			return fpf, err
@@ -224,7 +224,7 @@ func getFilesPerFolder(u uint, p uint, folders []models.Folder) (map[string][]mo
 	}
 
 	// folder_idがnullのfileを取得。
-	nff, err := models.GetNoFolderFiles(u, p)
+	nff, err := models.GetNoFolderFiles(models.DBC.DB, u, p)
 	if err != nil {
 		logger.Slog.Error(err.Error())
 		return fpf, err
@@ -246,12 +246,12 @@ func PostPreHome(c echo.Context) error {
 
 	logger.Slog.Info("get claims from user request", "claims", claims)
 
-	u, err := models.GetExistUser(claims.Email)
+	u, err := models.GetExistUser(models.DBC.DB, claims.Email)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, notExistUserErrorResponse)
 	}
 
-	_, projects, err := models.GetProjects(u.ID)
+	_, projects, err := models.GetProjects(models.DBC.DB, u.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, notMathProjectErrorResponse)
 	}
@@ -307,14 +307,14 @@ func UpdateMarkdown(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
 	}
 
-	err = models.UpdateFile(f.ID, f.Content)
+	err = models.UpdateFile(models.DBC.DB, f.ID, f.Content)
 	if err != nil {
 		logger.Slog.Error(err.Error())
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
 
 	// updateしたfileを取得。
-	file, err := models.GetFile(f.ID)
+	file, err := models.GetFile(models.DBC.DB, f.ID)
 	if err != nil {
 		logger.Slog.Error(err.Error())
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
@@ -351,7 +351,7 @@ func CreateNewFolder(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
 	}
 
-	f, err := models.CreateFolder(fo.Name, fo.UserID, fo.ProjectID, fo.ParentFolderID)
+	f, err := models.CreateFolder(models.DBC.DB, fo.Name, fo.UserID, fo.ProjectID, fo.ParentFolderID)
 	if err != nil {
 		logger.Slog.Error(err.Error())
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
@@ -387,7 +387,7 @@ func CreateNewFile(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
 	}
 
-	file, err := models.CreateFile(f.Name, f.UserID, f.ProjectID, f.FolderID)
+	file, err := models.CreateFile(models.DBC.DB, f.Name, f.UserID, f.ProjectID, f.FolderID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
@@ -424,7 +424,7 @@ func DeleteFolder(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
 	}
 
-	err = models.DeleteFolder(fo.ID)
+	err = models.DeleteFolder(models.DBC.DB, fo.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
@@ -461,7 +461,7 @@ func DeleteFile(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, unAuthorizedErrorResponse)
 	}
 
-	err = models.DeleteFile(f.ID)
+	err = models.DeleteFile(models.DBC.DB, f.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}

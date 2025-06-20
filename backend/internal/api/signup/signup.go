@@ -97,7 +97,7 @@ func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
 	u := newUserData(userMap)
 	logger.Slog.Info("check request form data", "name", u.name, "email", u.email, "pass", u.password)
 
-	if err := models.IsEmailExist(u.email); err != nil {
+	if err := models.IsEmailExist(models.DBC.DB, u.email); err != nil {
 		logger.Slog.Error("this email is already exist")
 		return models.DBC.DB, &models.User{}, err
 	}
@@ -112,7 +112,7 @@ func createUser(c echo.Context) (*gorm.DB, *models.User, error) {
 		return models.DBC.DB, &models.User{}, err
 	} else {
 		u.password = p
-		return models.CreateUser(u.name, u.email, u.password, u.salt)
+		return models.CreateUser(models.DBC.DB, u.name, u.email, u.password, u.salt)
 	}
 }
 

@@ -21,14 +21,14 @@ var (
 )
 
 // 同じemailが存在しないかをチェック。emailが存在していたらerrorを返す。e=email
-func IsEmailExist(e string) error {
-	DBC.DB.Table("users").Count(&emailCount)
+func IsEmailExist(tx *gorm.DB, e string) error {
+	tx.Table("users").Count(&emailCount)
 	if 0 == emailCount {
 		return nil
 	}
 
 	var user User
-	result := DBC.DB.Find(&user, "email = ?", e)
+	result := tx.Find(&user, "email = ?", e)
 	if 0 == result.RowsAffected {
 		return nil
 	}
@@ -36,23 +36,23 @@ func IsEmailExist(e string) error {
 }
 
 // ユーザー取得。e=email
-func getUser(e string) (*gorm.DB, *User, error) {
+func getUser(tx *gorm.DB, e string) (*gorm.DB, *User, error) {
 	user := &User{Email: e}
-	result := DBC.DB.Where("email = ?", e).Take(user)
+	result := tx.Where("email = ?", e).Take(user)
 	if result.Error != nil {
 		return result, &User{}, result.Error
 	}
 	return result, user, nil
 }
 
-func GetExistUser(e string) (*User, error) {
-	err := IsEmailExist(e)
+func GetExistUser(tx *gorm.DB, e string) (*User, error) {
+	err := IsEmailExist(tx, e)
 	if err == nil {
 		logger.Slog.Error("does not exist this email", "email", e)
 		return &User{}, notExisitEmailError
 	}
 
-	_, u, err := getUser(e)
+	_, u, err := getUser(tx, e)
 	if err != nil {
 		logger.Slog.Error("falied get user from db", "error", err)
 		return &User{}, err
@@ -62,14 +62,14 @@ func GetExistUser(e string) (*User, error) {
 }
 
 // ユーザー作成。n=name, e=email, p=password, s=salt
-func CreateUser(n, e, p, s string) (*gorm.DB, *User, error) {
+func CreateUser(tx *gorm.DB, n, e, p, s string) (*gorm.DB, *User, error) {
 	user := &User{
 		Username: n,
 		Email:    e,
 		Password: p,
 		Salt:     s,
 	}
-	result := DBC.DB.Create(user)
+	result := tx.Create(user)
 	if result.Error != nil {
 		return result, &User{}, result.Error
 	}
@@ -77,9 +77,9 @@ func CreateUser(n, e, p, s string) (*gorm.DB, *User, error) {
 }
 
 // ユーザーに紐づくプロジェクトに引数nと同じ名前のプロジェクトが存在するか調べる。
-func isExistProject(n string, id uint) error {
+func isExistProject(tx *gorm.DB, n string, uid uint) error {
 	var project Project
-	result := DBC.DB.Where(&Project{Name: n, UserID: id}, "name", "user_id").Find(&project)
+	result := tx.Where(&Project{Name: n, UserID: uid}, "name", "user_id").Find(&project)
 
 	if result.Error != nil {
 		logger.Slog.Error(result.Error.Error())
@@ -94,28 +94,28 @@ func isExistProject(n string, id uint) error {
 	return nil
 }
 
-// プロジェクト作成。n=name, d=Description, id=user_id
-func CreateProject(n, d string, id uint) (*gorm.DB, *Project, error) {
-	if err := isExistProject(n, id); err != nil {
+// プロジェクト作成。n=name, d=Description, uid=user_id
+func CreateProject(tx *gorm.DB, n, d string, uid uint) (*gorm.DB, *Project, error) {
+	if err := isExistProject(tx, n, uid); err != nil {
 		return &gorm.DB{}, &Project{}, err
 	}
 
 	project := &Project{
 		Name:        n,
 		Description: d,
-		UserID:      id,
+		UserID:      uid,
 	}
-	result := DBC.DB.Create(project)
+	result := tx.Create(project)
 	if result.Error != nil {
 		return result, &Project{}, result.Error
 	}
 	return result, project, nil
 }
 
-// user_idに紐づくプロジェクト取得
-func GetProject(id uint) (*gorm.DB, Project, error) {
+// project_idに紐づくプロジェクト取得
+func GetProject(tx *gorm.DB, id uint) (*gorm.DB, Project, error) {
 	var project Project
-	result := DBC.DB.Where(&Project{UserID: id}, "user_id").Find(&project)
+	result := tx.First(&project, id)
 	if result.Error != nil {
 		logger.Slog.Error("failed to get project from user", "error", result.Error.Error())
 		return result, project, failedGetProjectError
@@ -124,9 +124,9 @@ func GetProject(id uint) (*gorm.DB, Project, error) {
 }
 
 // user_idに紐づく複数のプロジェクト取得。
-func GetProjects(id uint) (*gorm.DB, []Project, error) {
+func GetProjects(tx *gorm.DB, uid uint) (*gorm.DB, []Project, error) {
 	var projects []Project
-	result := DBC.DB.Where(&Project{UserID: id}, "user_id").Find(&projects)
+	result := tx.Where(&Project{UserID: uid}, "user_id").Find(&projects)
 	if result.Error != nil {
 		logger.Slog.Error("failed to get projects from user", "error", result.Error.Error())
 		return result, projects, failedGetProjectsError
@@ -135,9 +135,9 @@ func GetProjects(id uint) (*gorm.DB, []Project, error) {
 }
 
 // フォルダ取得。
-func GetFolders(userID uint, projectID uint) (*gorm.DB, []Folder, error) {
+func GetFolders(tx *gorm.DB, userID uint, projectID uint) (*gorm.DB, []Folder, error) {
 	var folders []Folder
-	result := DBC.DB.Where(&Folder{UserID: userID, ProjectID: projectID},
+	result := tx.Where(&Folder{UserID: userID, ProjectID: projectID},
 		"user_id",
 		"project_id",
 	).Find(&folders)
@@ -150,9 +150,9 @@ func GetFolders(userID uint, projectID uint) (*gorm.DB, []Folder, error) {
 }
 
 // ファイル取得。
-func GetFiles(userID, projectID, folderID uint) ([]File, error) {
+func GetFiles(tx *gorm.DB, userID, projectID, folderID uint) ([]File, error) {
 	var files []File
-	result := DBC.DB.Where(&File{UserID: userID, ProjectID: projectID, FolderID: &folderID},
+	result := tx.Where(&File{UserID: userID, ProjectID: projectID, FolderID: &folderID},
 		"user_id",
 		"project_id",
 		"folder_id",
@@ -167,10 +167,10 @@ func GetFiles(userID, projectID, folderID uint) ([]File, error) {
 }
 
 // フォルダに関連していないファイル取得。
-func GetNoFolderFiles(userID, projectID uint) ([]File, error) {
+func GetNoFolderFiles(tx *gorm.DB, userID, projectID uint) ([]File, error) {
 	var files []File
 
-	result := DBC.DB.Where(
+	result := tx.Where(
 		&File{UserID: userID, ProjectID: projectID, FolderID: nil},
 		"user_id",
 		"project_id",
@@ -186,9 +186,9 @@ func GetNoFolderFiles(userID, projectID uint) ([]File, error) {
 }
 
 // 一つのファイルを取得。
-func GetFile(fileID uint) (File, error) {
+func GetFile(tx *gorm.DB, fileID uint) (File, error) {
 	var file File
-	result := DBC.DB.First(&file, fileID)
+	result := tx.First(&file, fileID)
 
 	if result.Error != nil {
 		logger.Slog.Error("", "error", result.Error.Error())
@@ -199,8 +199,8 @@ func GetFile(fileID uint) (File, error) {
 }
 
 // ファイルのContentを更新。
-func UpdateFile(fileID uint, content string) error {
-	result := DBC.DB.Model(&File{ID: fileID}).Update("content", content)
+func UpdateFile(tx *gorm.DB, fileID uint, content string) error {
+	result := tx.Model(&File{ID: fileID}).Update("content", content)
 	if result.Error != nil {
 		logger.Slog.Error("failed to update file content", "error", result.Error.Error())
 		return result.Error
@@ -209,7 +209,7 @@ func UpdateFile(fileID uint, content string) error {
 }
 
 // フォルダ作成
-func CreateFolder(n string, ui, pi uint, pfi *uint) (Folder, error) {
+func CreateFolder(tx *gorm.DB, n string, ui, pi uint, pfi *uint) (Folder, error) {
 	fo := Folder{
 		Name:           n,
 		UserID:         ui,
@@ -217,7 +217,7 @@ func CreateFolder(n string, ui, pi uint, pfi *uint) (Folder, error) {
 		ParentFolderID: pfi,
 	}
 
-	result := DBC.DB.Create(&fo)
+	result := tx.Create(&fo)
 	if result.Error != nil {
 		logger.Slog.Error(result.Error.Error())
 		return fo, result.Error
@@ -227,7 +227,7 @@ func CreateFolder(n string, ui, pi uint, pfi *uint) (Folder, error) {
 }
 
 // ファイル作成
-func CreateFile(n string, ui, pi uint, fi *uint) (File, error) {
+func CreateFile(tx *gorm.DB, n string, ui, pi uint, fi *uint) (File, error) {
 	f := File{
 		Name:      n,
 		UserID:    ui,
@@ -235,7 +235,7 @@ func CreateFile(n string, ui, pi uint, fi *uint) (File, error) {
 		FolderID:  fi,
 	}
 
-	result := DBC.DB.Create(&f)
+	result := tx.Create(&f)
 	if result.Error != nil {
 		logger.Slog.Error(result.Error.Error())
 		return f, result.Error
@@ -245,12 +245,12 @@ func CreateFile(n string, ui, pi uint, fi *uint) (File, error) {
 }
 
 // フォルダ削除
-func DeleteFolder(foi uint) error {
+func DeleteFolder(tx *gorm.DB, foi uint) error {
 	fo := Folder{
 		ID: foi,
 	}
 
-	result := DBC.DB.Delete(&fo)
+	result := tx.Delete(&fo)
 	if result.Error != nil {
 		logger.Slog.Error(result.Error.Error())
 		return result.Error
@@ -259,12 +259,12 @@ func DeleteFolder(foi uint) error {
 }
 
 // ファイル削除
-func DeleteFile(fi uint) error {
+func DeleteFile(tx *gorm.DB, fi uint) error {
 	f := File{
 		ID: fi,
 	}
 
-	result := DBC.DB.Delete(&f)
+	result := tx.Delete(&f)
 	if result.Error != nil {
 		logger.Slog.Error(result.Error.Error())
 		return result.Error

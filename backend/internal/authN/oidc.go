@@ -87,7 +87,7 @@ func afterSuccessedOAuth2(c echo.Context, t string) ([]byte, error) {
 }
 
 func oauth2SignUp(c echo.Context, n, e string) error {
-	_, u, err := models.CreateUser(n, e, "", "")
+	_, u, err := models.CreateUser(models.DBC.DB, n, e, "", "")
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func oauth2SignUp(c echo.Context, n, e string) error {
 }
 
 func oauth2Login(c echo.Context, e string) error {
-	u, err := models.GetExistUser(e)
+	u, err := models.GetExistUser(models.DBC.DB, e)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func OAuth2Callback(c echo.Context) error {
 	email := claims.Email
 
 	// emailが存在してたらLogin, 存在してなかったらSignUp。
-	err = models.IsEmailExist(email)
+	err = models.IsEmailExist(models.DBC.DB, email)
 	if err != nil {
 		logger.Slog.Info("OAuth2(OIDC) Login")
 		oauth2Login(c, email)
