@@ -87,24 +87,6 @@ func isExistProject(tx *gorm.DB, n string, uid uint) error {
 	return nil
 }
 
-// プロジェクト作成。n=name, d=Description, uid=user_id
-func CreateProject(tx *gorm.DB, n, d string, uid uint) (*gorm.DB, *Project, error) {
-	if err := isExistProject(tx, n, uid); err != nil {
-		return &gorm.DB{}, &Project{}, err
-	}
-
-	project := &Project{
-		Name:        n,
-		Description: d,
-		UserID:      uid,
-	}
-	result := tx.Create(project)
-	if result.Error != nil {
-		return result, &Project{}, result.Error
-	}
-	return result, project, nil
-}
-
 // project_idに紐づくプロジェクト取得
 func GetProject(tx *gorm.DB, id uint) (*gorm.DB, Project, error) {
 	var project Project
@@ -127,6 +109,24 @@ func GetProjects(tx *gorm.DB, uid uint) (*gorm.DB, []Project, error) {
 	return result, projects, nil
 }
 
+// プロジェクト作成。n=name, d=Description, uid=user_id
+func CreateProject(tx *gorm.DB, n, d string, uid uint) (*gorm.DB, *Project, error) {
+	if err := isExistProject(tx, n, uid); err != nil {
+		return &gorm.DB{}, &Project{}, err
+	}
+
+	project := &Project{
+		Name:        n,
+		Description: d,
+		UserID:      uid,
+	}
+	result := tx.Create(project)
+	if result.Error != nil {
+		return result, &Project{}, result.Error
+	}
+	return result, project, nil
+}
+
 // フォルダ取得。
 func GetFolders(tx *gorm.DB, userID uint, projectID uint) (*gorm.DB, []Folder, error) {
 	var folders []Folder
@@ -140,6 +140,51 @@ func GetFolders(tx *gorm.DB, userID uint, projectID uint) (*gorm.DB, []Folder, e
 		return result, folders, failedGetFoldersError
 	}
 	return result, folders, nil
+}
+
+// フォルダ作成
+func CreateFolder(tx *gorm.DB, n string, ui, pi uint, pfi *uint) (Folder, error) {
+	fo := Folder{
+		Name:           n,
+		UserID:         ui,
+		ProjectID:      pi,
+		ParentFolderID: pfi,
+	}
+
+	result := tx.Create(&fo)
+	if result.Error != nil {
+		logger.Slog.Error(result.Error.Error())
+		return fo, result.Error
+	}
+
+	return fo, nil
+}
+
+// フォルダ削除
+func DeleteFolder(tx *gorm.DB, foi uint) error {
+	fo := Folder{
+		ID: foi,
+	}
+
+	result := tx.Delete(&fo)
+	if result.Error != nil {
+		logger.Slog.Error(result.Error.Error())
+		return result.Error
+	}
+	return nil
+}
+
+// 一つのファイルを取得。
+func GetFile(tx *gorm.DB, fileID uint) (File, error) {
+	var file File
+	result := tx.First(&file, fileID)
+
+	if result.Error != nil {
+		logger.Slog.Error("", "error", result.Error.Error())
+		return file, result.Error
+	}
+
+	return file, nil
 }
 
 // ファイル取得。
@@ -178,19 +223,6 @@ func GetNoFolderFiles(tx *gorm.DB, userID, projectID uint) ([]File, error) {
 	return files, nil
 }
 
-// 一つのファイルを取得。
-func GetFile(tx *gorm.DB, fileID uint) (File, error) {
-	var file File
-	result := tx.First(&file, fileID)
-
-	if result.Error != nil {
-		logger.Slog.Error("", "error", result.Error.Error())
-		return file, result.Error
-	}
-
-	return file, nil
-}
-
 // ファイルのContentを更新。
 func UpdateFile(tx *gorm.DB, fileID uint, content string) error {
 	result := tx.Model(&File{ID: fileID}).Update("content", content)
@@ -199,24 +231,6 @@ func UpdateFile(tx *gorm.DB, fileID uint, content string) error {
 		return result.Error
 	}
 	return nil
-}
-
-// フォルダ作成
-func CreateFolder(tx *gorm.DB, n string, ui, pi uint, pfi *uint) (Folder, error) {
-	fo := Folder{
-		Name:           n,
-		UserID:         ui,
-		ProjectID:      pi,
-		ParentFolderID: pfi,
-	}
-
-	result := tx.Create(&fo)
-	if result.Error != nil {
-		logger.Slog.Error(result.Error.Error())
-		return fo, result.Error
-	}
-
-	return fo, nil
 }
 
 // ファイル作成
@@ -235,20 +249,6 @@ func CreateFile(tx *gorm.DB, n string, ui, pi uint, fi *uint) (File, error) {
 	}
 
 	return f, nil
-}
-
-// フォルダ削除
-func DeleteFolder(tx *gorm.DB, foi uint) error {
-	fo := Folder{
-		ID: foi,
-	}
-
-	result := tx.Delete(&fo)
-	if result.Error != nil {
-		logger.Slog.Error(result.Error.Error())
-		return result.Error
-	}
-	return nil
 }
 
 // ファイル削除
