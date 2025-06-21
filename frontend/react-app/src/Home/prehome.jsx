@@ -81,6 +81,10 @@ const PreHome = ({ projects }) => {
       e.preventDefault();
       // console.log("project_name: ", inputValue);
 
+      if (inputValue === "") {
+        return;
+      }
+
       const fetchData = async () => {
         const response = await fetch(prehomePath, {
           method: "POST",
@@ -204,6 +208,7 @@ const PreHome = ({ projects }) => {
               name="project_name"
               value={inputValue}
               placeholder="Project Name"
+              required={true}
               autoComplete={"off"}
               autoFocus={true}
               onChange={(e) =>
