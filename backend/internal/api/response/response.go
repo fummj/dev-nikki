@@ -53,27 +53,32 @@ func NewHomeResponse(id uint, s, n, e, errmsg, phase string, pr models.Project, 
 }
 
 type FileUpdateResponse struct {
+	Common         CommonResponse
 	File           models.File              `json:"file"`
 	FilesPerFolder map[string][]models.File `json:"files_per_folder"`
 }
 
 type CreateFolderResponse struct {
+	Common         CommonResponse
 	ProjectFolders []models.Folder          `json:"project_folders"`
 	FilesPerFolder map[string][]models.File `json:"files_per_folder"`
 }
 
 type CreateFileResponse struct {
+	Common         CommonResponse
 	File           models.File              `json:"file"`
 	ProjectFolders []models.Folder          `json:"project_folders"`
 	FilesPerFolder map[string][]models.File `json:"files_per_folder"`
 }
 
 type DeleteFolderResponse struct {
+	Common         CommonResponse
 	ProjectFolders []models.Folder          `json:"project_folders"`
 	FilesPerFolder map[string][]models.File `json:"files_per_folder"`
 }
 
 type DeleteFileResponse struct {
+	Common         CommonResponse
 	File           models.File              `json:"file"`
 	ProjectFolders []models.Folder          `json:"project_folders"`
 	FilesPerFolder map[string][]models.File `json:"files_per_folder"`

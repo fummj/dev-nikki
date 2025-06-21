@@ -79,10 +79,11 @@ func Home(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, notExistUserErrorResponse)
 	}
 
-	_, project, err := models.GetProject(models.DBC.DB, u.ID)
+	_, projects, err := models.GetProjects(models.DBC.DB, u.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, notMathProjectErrorResponse)
 	}
+	project, _, err := getProject(c, *u, projects)
 
 	fs, err := getFolders(u.ID, project.ID)
 	if err != nil {
@@ -103,7 +104,7 @@ func Home(c echo.Context) error {
 			ErrorMsg: "",
 		},
 		Phase:          phaseHome,
-		Project:        project,
+		Project:        *project,
 		ProjectFolders: fs,
 		FilesPerFolder: fpf,
 	}
@@ -329,7 +330,12 @@ func UpdateMarkdown(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
-	resp := response.FileUpdateResponse{File: file, FilesPerFolder: fpf}
+
+	resp := response.FileUpdateResponse{
+		Common:         response.CommonResponse{ErrorMsg: ""},
+		File:           file,
+		FilesPerFolder: fpf,
+	}
 
 	return c.JSON(http.StatusOK, resp)
 }
@@ -366,7 +372,11 @@ func CreateNewFolder(c echo.Context) error {
 
 	fpf, err := getFilesPerFolder(f.UserID, f.ProjectID, fs)
 
-	resp := response.CreateFolderResponse{ProjectFolders: fs, FilesPerFolder: fpf}
+	resp := response.CreateFolderResponse{
+		Common:         response.CommonResponse{ErrorMsg: ""},
+		ProjectFolders: fs,
+		FilesPerFolder: fpf,
+	}
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -403,7 +413,12 @@ func CreateNewFile(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
 
-	resp := response.CreateFileResponse{File: file, ProjectFolders: fs, FilesPerFolder: fpf}
+	resp := response.CreateFileResponse{
+		Common:         response.CommonResponse{ErrorMsg: ""},
+		File:           file,
+		ProjectFolders: fs,
+		FilesPerFolder: fpf,
+	}
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -440,7 +455,11 @@ func DeleteFolder(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
 
-	resp := response.DeleteFolderResponse{ProjectFolders: fs, FilesPerFolder: fpf}
+	resp := response.DeleteFolderResponse{
+		Common:         response.CommonResponse{ErrorMsg: ""},
+		ProjectFolders: fs,
+		FilesPerFolder: fpf,
+	}
 	return c.JSON(http.StatusOK, resp)
 }
 
@@ -477,6 +496,11 @@ func DeleteFile(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, insernalServerErrorResponse)
 	}
 
-	resp := response.DeleteFileResponse{File: *f, ProjectFolders: fs, FilesPerFolder: fpf}
+	resp := response.DeleteFileResponse{
+		Common:         response.CommonResponse{ErrorMsg: ""},
+		File:           *f,
+		ProjectFolders: fs,
+		FilesPerFolder: fpf,
+	}
 	return c.JSON(http.StatusOK, resp)
 }
