@@ -46,7 +46,7 @@ func init() {
 }
 
 func getCredentials() {
-	m := utils.GetEnv(envPath)
+	m := utils.GetEnv(utils.GetFilePath(envPath))
 	for k := range credentials {
 		credentials[k] = m[k]
 	}

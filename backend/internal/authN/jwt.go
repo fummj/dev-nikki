@@ -15,14 +15,15 @@ import (
 
 	"dev_nikki/internal/logger"
 	"dev_nikki/internal/models"
+	"dev_nikki/pkg/utils"
 )
 
 var (
 	CustomClaimsTypeAssertionError = errors.New("failed to type assertion: claim is not CustomClaim")
 	failedParseJWTError            = errors.New("invalid token in ParseJWT function")
 
-	publicKeyPath        string        = "public_jwt.pem"
-	privateKeyPath       string        = "private_jwt.pem"
+	publicKeyFile        string        = "public_jwt.pem"
+	privateKeyFile       string        = "private_jwt.pem"
 	errInvalidParseToKey error         = errors.New("does not match the parse format")
 	errInvalidJWT        error         = errors.New("this jwt is invalid")
 	algorithm            string        = "EdDSA"
@@ -152,8 +153,8 @@ type jwtKeysKeeper struct {
 
 func NewJWTKeysKeeper() jwtKeysKeeper {
 	j := jwtKeysKeeper{
-		privPath: privateKeyPath,
-		publPath: publicKeyPath,
+		privPath: utils.GetFilePath(privateKeyFile),
+		publPath: utils.GetFilePath(publicKeyFile),
 		Priv:     ed25519.PrivateKey{},
 		Publ:     ed25519.PublicKey{},
 	}
