@@ -46,8 +46,8 @@ func EmailValidation(e string) error {
 // passwordのバリデーションチェック
 func PasswordValidation(p string) error {
 	count := utf8.RuneCountInString(p)
-	if count < minPasswordLen && count > maxPasswordLen {
-		logger.Slog.Error("this password is too long", "password", p)
+	if count < minPasswordLen || count > maxPasswordLen {
+		logger.Slog.Error("this password is wrong", "password", p)
 		return passwordValidationError
 	}
 

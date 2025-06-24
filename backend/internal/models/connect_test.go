@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	// "gorm.io/driver/postgres"
-	// "gorm.io/gorm"
-	// "dev_nikki/pkg/utils"
 )
 
 // ↓NewDBConnector()の内部で"./.env"ファイルを探しにいくのでmodelsパッケージの配下に、
@@ -24,9 +21,8 @@ var (
 	TestUserName     string = "test_user"
 	TestUserEmail    string = "test@test"
 	TestUserPassword string = "y6PEKW29"
-	// ↓saltに関してはソースコード調べて判断。1. 適当にテスト用に生成する。2. 元のソースコードをそのまま実行して生成する。
-	TestUserSalt string = ""
-	testUserData *User  = &User{
+	TestUserSalt     string = ""
+	testUserData     *User  = &User{
 		Username: TestUserName,
 		Email:    TestUserEmail,
 		Password: TestUserPassword,
