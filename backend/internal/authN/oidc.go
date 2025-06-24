@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
+	"runtime"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/labstack/echo/v4"
@@ -46,7 +48,9 @@ func init() {
 }
 
 func getCredentials() {
-	m := utils.GetEnv(utils.GetFilePath(envPath))
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	m := utils.GetEnv(utils.SearchFileFindParentDir(dir, envPath))
 	for k := range credentials {
 		credentials[k] = m[k]
 	}

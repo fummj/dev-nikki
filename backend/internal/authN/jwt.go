@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -152,9 +154,12 @@ type jwtKeysKeeper struct {
 }
 
 func NewJWTKeysKeeper() jwtKeysKeeper {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+
 	j := jwtKeysKeeper{
-		privPath: utils.GetFilePath(privateKeyFile),
-		publPath: utils.GetFilePath(publicKeyFile),
+		privPath: utils.SearchFileFindParentDir(dir, privateKeyFile),
+		publPath: utils.SearchFileFindParentDir(dir, publicKeyFile),
 		Priv:     ed25519.PrivateKey{},
 		Publ:     ed25519.PublicKey{},
 	}
@@ -177,7 +182,10 @@ func (keys jwtKeysKeeper) extractPemData(filepath string) (*pem.Block, error) {
 }
 
 func (keys *jwtKeysKeeper) parseToPrivateKey(pem *pem.Block) error {
-	k, _ := x509.ParsePKCS8PrivateKey(pem.Bytes)
+	k, err := x509.ParsePKCS8PrivateKey(pem.Bytes)
+	if err != nil {
+		return err
+	}
 
 	priv, ok := k.(ed25519.PrivateKey)
 	if !ok {
@@ -189,7 +197,10 @@ func (keys *jwtKeysKeeper) parseToPrivateKey(pem *pem.Block) error {
 }
 
 func (keys *jwtKeysKeeper) parseToPublicKey(pem *pem.Block) error {
-	k, _ := x509.ParsePKIXPublicKey(pem.Bytes)
+	k, err := x509.ParsePKIXPublicKey(pem.Bytes)
+	if err != nil {
+		return err
+	}
 
 	publ, ok := k.(ed25519.PublicKey)
 	if !ok {
@@ -205,7 +216,9 @@ func (keys *jwtKeysKeeper) Load() {
 	if err != nil {
 		logger.Slog.Error(err.Error())
 	}
-	keys.parseToPrivateKey(privPem)
+	if err := keys.parseToPrivateKey(privPem); err != nil {
+		logger.Slog.Error(err.Error())
+	}
 
 	publPem, err := keys.extractPemData(keys.publPath)
 	if err != nil {

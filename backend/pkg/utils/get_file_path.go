@@ -5,14 +5,16 @@ import (
 	"os"
 )
 
-func GetFilePath(filename string) string {
-	if _, err := os.Stat(filename); !os.IsNotExist(err) {
-		return filename
+func SearchFileFindParentDir(dir, name string) string {
+	d := ""
+	for {
+		if f, err := os.Stat(fmt.Sprint(dir, "/", d, name)); os.IsNotExist(err) {
+			d = fmt.Sprint(d, "../")
+			continue
+		} else {
+			if !f.IsDir() {
+				return fmt.Sprint(dir, "/", d, name)
+			}
+		}
 	}
-
-	if _, err := os.Stat(fmt.Sprint("./../../", filename)); !os.IsNotExist(err) {
-		return fmt.Sprint("./../../", filename)
-	}
-
-	return ""
 }

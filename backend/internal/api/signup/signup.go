@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -54,7 +56,9 @@ type userData struct {
 }
 
 func GetPepper() string {
-	p := utils.GetEnv(models.EnvPath)["PEPPER"]
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Dir(filename)
+	p := utils.GetEnv(utils.SearchFileFindParentDir(dir, models.EnvPath))["PEPPER"]
 	return p
 }
 
