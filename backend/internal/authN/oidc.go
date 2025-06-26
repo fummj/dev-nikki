@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path/filepath"
-	"runtime"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/labstack/echo/v4"
@@ -33,14 +31,12 @@ var (
 	failedExtractIDTokenError       = errors.New("failed to extract id_token")
 	failedVerifierIDTokenError      = errors.New("failed to verifier id_token")
 
-	envPath     = ".env"
-	credentials = map[string]string{
-		"CLIENT_ID":     "",
-		"CLIENT_SECRET": "",
-	}
-	state    string
-	verifier string
-	provider *oidc.Provider
+	envPath         = ".env"
+	credentialsKeys = []any{"CLIENT_ID", "CLIENT_SECRET"}
+	credentials     = map[string]string{}
+	state           string
+	verifier        string
+	provider        *oidc.Provider
 )
 
 func init() {
@@ -48,12 +44,7 @@ func init() {
 }
 
 func getCredentials() {
-	_, filename, _, _ := runtime.Caller(0)
-	dir := filepath.Dir(filename)
-	m := utils.GetEnv(utils.SearchFileFindParentDir(dir, envPath))
-	for k := range credentials {
-		credentials[k] = m[k]
-	}
+	credentials = utils.GetEnv(credentialsKeys)
 }
 
 func generateState() string {

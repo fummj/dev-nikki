@@ -2,33 +2,30 @@ package utils
 
 import (
 	"os"
-	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 )
 
-var envPath = ".env.test"
-
 func TestGetEnv(t *testing.T) {
 
-	_, filename, _, _ := runtime.Caller(0)
-	currentDir := filepath.Dir(filename)
-	envPath := filepath.Join(currentDir, ".env.test")
-
-	testEnvData := `
-		TEST_USER="testdesu"
-		TEST_PASSWORD="DWQ8VwlQDodU"
-		TEST_DB_NAME="test_db"
-	`
-
-	err := os.WriteFile(envPath, []byte(testEnvData), 0644)
-	if err != nil {
-		t.Fatal(err)
+	testEnvData := map[string]string{
+		"TEST_USER":     "testdesu",
+		"TEST_PASSWORD": "DWQ8VwlQDodU",
+		"TEST_DB_NAME":  "test_db",
 	}
 
-	defer os.Remove(envPath)
+	// 環境変数を設定
+	for k, v := range testEnvData {
+		os.Setenv(k, v)
+	}
+
+	// 設定した環境変数を削除
+	defer func() {
+		for k := range testEnvData {
+			os.Unsetenv(k)
+		}
+	}()
 
 	expected := map[string]string{
 		"TEST_USER":     "testdesu",
@@ -36,7 +33,8 @@ func TestGetEnv(t *testing.T) {
 		"TEST_DB_NAME":  "test_db",
 	}
 
-	result := GetEnv(envPath)
+	keys := []any{"TEST_USER", "TEST_PASSWORD", "TEST_DB_NAME"}
+	result := GetEnv(keys)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Error(diff)
 	}

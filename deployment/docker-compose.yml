@@ -19,7 +19,16 @@ services:
       dev_nikki_network:
         ipv4_address: 172.23.0.2
     environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - SSL_MODE=${SSL_MODE}
       - TZ=${TZ}
+      - HOST=${HOST}
+      - PEPPER=${PEPPER}
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
     tty: true
     depends_on:
       - db

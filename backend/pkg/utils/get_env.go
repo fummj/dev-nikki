@@ -1,23 +1,19 @@
 package utils
 
 import (
-	"log"
-
-	"github.com/joho/godotenv"
+	"os"
 )
 
 var envMap map[string]string = make(map[string]string, 0)
 
-// 環境変数入りのmapを取得。引数pは隠しファイルのpath
-func GetEnv(p string) map[string]string {
-	err := godotenv.Load(p)
-	if err != nil {
-		log.Fatal(err)
+// セットされている環境変数を取得する。
+func GetEnv(s []any) map[string]string {
+	m := map[string]string{}
+
+	for _, v := range s {
+		key, _ := v.(string)
+		m[key] = os.Getenv(key)
 	}
 
-	envMap, err := godotenv.Read(p)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return envMap
+	return m
 }

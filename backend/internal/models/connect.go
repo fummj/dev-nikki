@@ -10,10 +10,6 @@ import (
 	"dev_nikki/pkg/utils"
 )
 
-const (
-	EnvPath = ".env"
-)
-
 var (
 	dsn          string = "host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s"
 	DsnElmyArray []any  = []any{"HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_PORT", "SSL_MODE", "TZ"}
@@ -37,10 +33,11 @@ type DBConnector struct {
 
 // DSN作成
 func (c *DBConnector) CreateDSN(s []any) {
-	m := utils.GetEnv(EnvPath)
-	for i := 0; i < len(s); i++ {
-		if v, ok := s[i].(string); ok {
-			s[i] = m[v]
+
+	m := utils.GetEnv(s)
+	for i, v := range s {
+		if key, ok := v.(string); ok {
+			s[i] = m[key]
 		} else {
 			logger.Slog.Error("Failed: dsnElmyArray elements contain not string")
 			return
