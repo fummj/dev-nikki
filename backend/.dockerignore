@@ -1,8 +1,8 @@
-main
+# main
 private_jwt.pem
 public_jwt.pem
 .env
-dist/
+.git
 
 .DS_Store
 .log

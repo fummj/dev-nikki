@@ -1,0 +1,23 @@
+# 本番環境用
+
+FROM golang:1.23.4-alpine AS builder
+
+WORKDIR /usr/src
+
+COPY . ./
+RUN go mod download
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+
+
+FROM debian:stable-slim
+
+WORKDIR /usr/src
+
+RUN apt-get update && apt-get install -y ca-certificates --no-install-recommends
+
+COPY --from=builder /usr/src/static /usr/src/static
+
+COPY --from=builder /usr/src/main /usr/src/main
+
+CMD ["/usr/src/main"]

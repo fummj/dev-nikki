@@ -35,5 +35,17 @@ func main() {
 	fmt.Print("🛎️  dev_nikki 🛎️" + "\n")
 	fmt.Println("#############################################################")
 
+	// 開発環境
 	app.Logger.Fatal(app.Start(":8080"))
+
+	// 本番環境
+	// certPath := "/usr/src/certs/fullchain.pem"
+	// keyPath := "/usr/src/certs/privkey.pem"
+	//
+	// if err := app.StartTLS(":443", certPath, keyPath); err != nil {
+	// 	app.Logger.Fatal(err)
+	// }
+	//
+	// s := app.TLSServer
+	// fmt.Println("opened port: ", s.Addr)
 }

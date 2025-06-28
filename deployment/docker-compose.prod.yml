@@ -1,0 +1,64 @@
+volumes:
+  dev-nikki-data:
+
+networks:
+  dev_nikki_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.23.0.0/24
+
+services:
+  web:
+    build: ./../backend/
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # main(バイナリ)をイメージが作成された後にホストのもので上書きしてしまうから。
+      # - "../backend:/usr/src"
+      - "./../backend/public_jwt.pem:/usr/src/public_jwt.pem"
+      - "./../backend/private_jwt.pem:/usr/src/private_jwt.pem"
+      - "/etc/letsencrypt/live/dev-nikki.com/fullchain.pem:/usr/src/certs/fullchain.pem"
+      - "/etc/letsencrypt/live/dev-nikki.com/privkey.pem:/usr/src/certs/privkey.pem"
+    networks:
+      dev_nikki_network:
+        ipv4_address: 172.23.0.2
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - SSL_MODE=${SSL_MODE}
+      - TZ=${TZ}
+      - HOST=${HOST}
+      - PEPPER=${PEPPER}
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+    tty: true
+    depends_on:
+      db:
+       condition: service_healthy
+
+  db:
+    image: postgres:17.2-bullseye
+    ports:
+      - "5432:5432"
+    volumes:
+      - "dev-nikki-data:/var/lib/postgresql/data"
+    networks:
+      dev_nikki_network:
+        ipv4_address: 172.23.0.4
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - TZ=${TZ}
+    tty: true
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
