@@ -118,7 +118,10 @@ func oauth2Login(c echo.Context, e string) error {
 }
 
 func newOAuth2Config(c echo.Context) (*oauth2.Config, error) {
-	provider, _ = oidc.NewProvider(c.Request().Context(), googleURL)
+	provider, err := oidc.NewProvider(c.Request().Context(), googleURL)
+	if err != nil {
+		logger.Slog.Error(err.Error())
+	}
 
 	oauth2Config := &oauth2.Config{
 		ClientID:     credentials["CLIENT_ID"],
@@ -162,6 +165,11 @@ func OAuth2Callback(c echo.Context) error {
 	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok {
 		return failedExtractIDTokenError
+	}
+
+	provider, err := oidc.NewProvider(c.Request().Context(), googleURL)
+	if err != nil {
+		logger.Slog.Error(err.Error())
 	}
 
 	idTokenVerifier := provider.Verifier(&oidc.Config{ClientID: credentials["CLIENT_ID"]})
