@@ -228,8 +228,6 @@ const LoginForm = (isLogin) => {
             {displayErrorMsg(error)}
           </div>
         </form>
-        {/*確認用*/}
-        {/*<p aria-disabled={true}>Form Data: {JSON.stringify(formData)}</p>*/}
       </div>
     </>
   );

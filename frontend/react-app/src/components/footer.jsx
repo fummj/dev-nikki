@@ -1,8 +1,7 @@
 const Footer = () => {
   return (
     <>
-      <footer className={"fixed bottom-0 right-0 left-0 text-center mb-7"}>
-        {/*フォント変えるのありかもここだけ*/}
+      <footer className={"pt-40 text-center"}>
         <div className={"flex flex-col justify-center"}>
           <div className="bottom-proverb text-[24px] ">
             <h5 className="text-[#6C235B] font-semibold">To do is to be.</h5>
