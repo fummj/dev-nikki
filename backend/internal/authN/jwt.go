@@ -32,9 +32,6 @@ var (
 	period               time.Duration = time.Hour * 4
 	iss                  string        = "dev-nikki"
 	sub                  string        = "Accusess Token"
-	exp                  time.Time     = time.Now().Add(period)
-	iat                  time.Time     = time.Now()
-	jti                  string        = uuid.NewString()
 
 	KeysKeeper jwtKeysKeeper = NewJWTKeysKeeper()
 )
@@ -54,9 +51,9 @@ func NewClaim(id uint, name, email string) CustomClaims {
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    iss,
 			Subject:   sub,
-			ExpiresAt: jwt.NewNumericDate(exp),
-			IssuedAt:  jwt.NewNumericDate(iat),
-			ID:        jti,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(period)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ID:        uuid.NewString(),
 		},
 	}
 }

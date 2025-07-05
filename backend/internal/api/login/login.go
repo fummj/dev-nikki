@@ -66,6 +66,7 @@ func Login(c echo.Context) error {
 		logger.Slog.Error("Failed to create JWT", "error", err)
 		return c.JSON(http.StatusUnauthorized, loginFailedResponse)
 	}
+
 	authN.SetJWTCookie(c, tokenString)
 	resp := response.LoginResponse{
 		Common: response.CommonResponse{
@@ -76,5 +77,6 @@ func Login(c echo.Context) error {
 			ErrorMsg: "",
 		},
 	}
+
 	return c.JSON(http.StatusOK, resp)
 }
